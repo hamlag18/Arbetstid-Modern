@@ -33,10 +33,10 @@ serve(async (req) => {
     }
 
     // Kontrollera miljövariabler
-    const smtpHost = Deno.env.get('SMTP_HOSTNAME')
+    const smtpHost = Deno.env.get('SMTP_HOST')
     const smtpPort = Deno.env.get('SMTP_PORT')
-    const smtpUser = Deno.env.get('SMTP_USERNAME')
-    const smtpPass = Deno.env.get('SMTP_PASSWORD')
+    const smtpUser = Deno.env.get('USERNAME')
+    const smtpPass = Deno.env.get('PASSWORD')
 
     console.log('SMTP-konfiguration:', {
       host: smtpHost,

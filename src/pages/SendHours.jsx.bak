@@ -1,0 +1,357 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { sv } from "date-fns/locale";
+import supabase from "../supabase";
+
+function Card({ children, className = "", ...props }) {
+  return (
+    <div className={`bg-zinc-800 rounded-xl shadow-md ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function CardContent({ children, className = "", ...props }) {
+  return (
+    <div className={`p-4 ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+export default function SendHours() {
+  const navigate = useNavigate();
+  const [selectedDates, setSelectedDates] = useState([]);
+  const [reportedDates, setReportedDates] = useState([]);
+  const [sentDates, setSentDates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState(null);
+  const [currentDate, setCurrentDate] = useState(new Date());
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        setLoading(true);
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+        if (userError) {
+          console.error("Fel vid hämtning av användare:", userError);
+          setError("Kunde inte hämta användarinformation");
+          setLoading(false);
+          return;
+        }
+
+        const { data: reports, error: reportsError } = await supabase
+          .from('time_reports')
+          .select('date, sent')
+          .eq('user_id', user.id);
+
+        if (reportsError) {
+          console.error("Fel vid hämtning av tidrapporter:", reportsError);
+          setError("Kunde inte hämta tidrapporter");
+          setLoading(false);
+          return;
+        }
+
+        // Separera rapporter i skickade och osända
+        const reported = reports.filter(report => !report.sent).map(report => report.date);
+        const sent = reports.filter(report => report.sent).map(report => report.date);
+        
+        setReportedDates(reported);
+        setSentDates(sent);
+        setLoading(false);
+      } catch (error) {
+        console.error("Ett fel uppstod:", error);
+        setError("Ett oväntat fel uppstod");
+        setLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
+
+  const handleDateClick = (date) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    // Tillåt bara val av osända rapporter
+    if (!reportedDates.includes(dateStr)) {
+      return;
+    }
+    if (selectedDates.includes(dateStr)) {
+      setSelectedDates(selectedDates.filter(d => d !== dateStr));
+    } else {
+      setSelectedDates([...selectedDates, dateStr].sort());
+    }
+  };
+
+  const generateEmailContent = (timeReports) => {
+    const sortedReports = [...timeReports].sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    const weeklyReports = {};
+    sortedReports.forEach(report => {
+      const date = new Date(report.date);
+      const weekStart = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const weekEnd = format(endOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const weekKey = `${weekStart}`;
+      
+      if (!weeklyReports[weekKey]) {
+        weeklyReports[weekKey] = {
+          start: weekStart,
+          end: weekEnd,
+          reports: []
+        };
+      }
+      weeklyReports[weekKey].reports.push(report);
+    });
+
+    let emailContent = `
+      <div style="font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 700px; margin: 0 auto; padding: 32px; background-color: #fff; color: #37352f;">
+        <div style="margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f1f1f1;">
+          <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px;">Tidrapport</h1>
+          <p style="font-size: 14px; color: #6e6e6e; margin-bottom: 4px;">
+            ${format(new Date(sortedReports[0].date), 'd MMMM', { locale: sv })} – ${format(new Date(sortedReports[sortedReports.length - 1].date), 'd MMMM yyyy', { locale: sv })}
+          </p>
+        </div>
+    `;
+
+    Object.values(weeklyReports).forEach(week => {
+      emailContent += `
+        <div style="margin-bottom: 20px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+            <thead>
+              <tr>
+                <th colspan="5" style="text-align: left; padding: 0 0 2px 0; font-size: 16px; font-weight: 500; color: #37352f; border-bottom: none;">Vecka ${format(new Date(week.start), 'w', { locale: sv })}</th>
+              </tr>
+              <tr style="background-color: #f4f4f4;">
+                <th style="text-align: left; padding: 2px 6px; border-bottom: 1px solid #e0e0e0;">Datum</th>
+                <th style="text-align: left; padding: 2px 6px; border-bottom: 1px solid #e0e0e0;">Projekt</th>
+                <th style="text-align: right; padding: 2px 6px; border-bottom: 1px solid #e0e0e0;">Timmar</th>
+                <th style="text-align: left; padding: 2px 6px; border-bottom: 1px solid #e0e0e0;">Material</th>
+                <th style="text-align: left; padding: 2px 6px; border-bottom: 1px solid #e0e0e0;">Kommentar</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+
+      week.reports.forEach(report => {
+        emailContent += `
+              <tr>
+                <td style="padding: 2px 6px; border-bottom: 1px solid #f1f1f1;">${format(new Date(report.date), 'EEEE d MMM', { locale: sv })}</td>
+                <td style="padding: 2px 6px; border-bottom: 1px solid #f1f1f1;">${report.project}</td>
+                <td style="padding: 2px 6px; text-align: right; border-bottom: 1px solid #f1f1f1;">${report.hours}h</td>
+                <td style="padding: 2px 6px; border-bottom: 1px solid #f1f1f1;">${report.material || '—'}</td>
+                <td style="padding: 2px 6px; border-bottom: 1px solid #f1f1f1;">${report.comment || '—'}</td>
+              </tr>
+        `;
+      });
+
+      emailContent += `
+            </tbody>
+          </table>
+        </div>
+      `;
+    });
+
+    emailContent += `</div>`;
+    return emailContent;
+  };
+
+  const handleSend = async () => {
+    if (selectedDates.length === 0) {
+      setError("Välj minst ett datum att skicka");
+      return;
+    }
+
+    setSending(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) {
+        throw new Error('Ingen inloggad användare hittades');
+      }
+
+      console.log('Inloggad användare:', user.email);
+
+      const { data: reports, error: reportsError } = await supabase
+        .from('time_reports')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('date', selectedDates);
+
+      if (reportsError) throw reportsError;
+
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('*');
+
+      if (projectsError) throw projectsError;
+
+      const timeReports = reports.map(report => {
+        const project = projects.find(p => p.id === report.project);
+        return {
+          ...report,
+          project: project?.name || 'Okänt projekt',
+          material: report.materials || 'Inget material',
+          comment: report.comment || ''
+        };
+      });
+
+      const emailContent = generateEmailContent(timeReports);
+
+      const response = await fetch('https://arbetstid-modern-production.up.railway.app/send-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: 'tidrapport1157@gmail.com',
+          subject: `Tidrapport ${format(new Date(selectedDates[0]), 'd MMM', { locale: sv })} - ${format(new Date(selectedDates[selectedDates.length - 1]), 'd MMM yyyy', { locale: sv })}`,
+          html: emailContent
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Railway API svarade med fel:', errorData);
+        throw new Error(`Kunde inte skicka e-post: ${errorData.error || 'Okänt fel'}`);
+      }
+
+      const data = await response.json();
+      console.log('E-post skickad framgångsrikt:', data);
+
+      // Uppdatera tidrapporterna som skickade
+      const { error: updateError } = await supabase
+        .from('time_reports')
+        .update({ sent: true })
+        .eq('user_id', user.id)
+        .in('date', selectedDates);
+
+      if (updateError) throw updateError;
+
+      // Navigera tillbaka till startsidan
+      navigate('/');
+    } catch (error) {
+      console.error("Fel vid skickande:", error);
+      setError(error.message || "Kunde inte skicka tidrapporterna");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const handlePrevMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
+        <p>Laddar kalender...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10 px-4">
+      <h1 className="text-3xl font-bold mb-6 text-center">Skicka Timmar</h1>
+
+      <Card className="mb-8 w-full max-w-md">
+        <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            <button onClick={handlePrevMonth} className="text-zinc-400 hover:text-white">
+              &lt; Föregående
+            </button>
+            <h2 className="text-xl font-semibold">
+              {format(currentDate, "MMMM yyyy", { locale: sv })}
+            </h2>
+            <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white">
+              Nästa &gt;
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day, i) => (
+              <div key={i} className="text-center text-sm font-medium text-zinc-400">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 7 }).map((_, i) => {
+              const firstDayOfMonth = startOfMonth(currentDate);
+              const firstDayOfWeek = startOfWeek(firstDayOfMonth, { locale: sv });
+              const dayToShow = addDays(firstDayOfWeek, i);
+              if (!isSameMonth(dayToShow, firstDayOfMonth)) {
+                return (
+                  <div
+                    key={i}
+                    className="aspect-square w-full text-sm font-medium rounded-md bg-zinc-800 opacity-25"
+                    style={{ minHeight: '40px' }}
+                  />
+                );
+              }
+              return null;
+            })}
+            {daysInMonth.map((date, i) => {
+              const dateStr = format(date, "yyyy-MM-dd");
+              const isSelected = selectedDates.includes(dateStr);
+              const isReported = reportedDates.includes(dateStr);
+              const isSent = sentDates.includes(dateStr);
+              const isCurrentMonth = isSameMonth(date, currentDate);
+              const isCurrentDay = isToday(date);
+
+              let buttonClass = 'bg-zinc-700 hover:bg-zinc-600';
+              if (isSelected) {
+                buttonClass = 'bg-blue-500 hover:bg-blue-600';
+              } else if (isReported) {
+                buttonClass = 'bg-yellow-500 hover:bg-yellow-600';
+              } else if (isSent) {
+                buttonClass = 'bg-green-500';
+              }
+
+              return (
+                <button
+                  key={i}
+                  onClick={() => handleDateClick(date)}
+                  className={`aspect-square w-full text-sm font-medium rounded-md ${buttonClass} \
+                    ${!isCurrentMonth ? 'opacity-50' : ''} \
+                    ${isCurrentDay ? 'ring-2 ring-blue-500' : ''}`}
+                  style={{ minHeight: '40px' }}
+                  disabled={!isReported && !isSent}
+                >
+                  {format(date, "d")}
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
+      <div className="flex gap-4 w-full max-w-md">
+        <button
+          onClick={handleSend}
+          disabled={sending || selectedDates.length === 0}
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
+        >
+          {sending ? "Skickar..." : "Skicka"}
+        </button>
+        <button
+          onClick={() => navigate("/")}
+          className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-4 rounded-lg transition-colors"
+        >
+          Tillbaka
+        </button>
+      </div>
+    </div>
+  );
+}

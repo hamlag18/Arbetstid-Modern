@@ -1,0 +1,28 @@
+{
+  "name": "arbetstid-modern",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Modern arbetstidsapp med React och Vite",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.49.4",
+    "cors": "^2.8.5",
+    "date-fns": "^4.1.0",
+    "express": "^5.1.0",
+    "node-fetch": "^2.7.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.1"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "tailwindcss": "^3.4.0",
+    "vite": "^5.0.0"
+  }
+}

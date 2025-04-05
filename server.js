@@ -9,18 +9,37 @@ const __dirname = dirname(__filename);
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Aktivera CORS
+// Middleware
 app.use(cors());
+app.use(express.json());
 
-// Servera statiska filer från dist-mappen
-app.use(express.static(join(__dirname, 'dist')));
+// Statiska filer
+app.use(express.static('dist'));
 
-// Hantera alla routes genom att servera index.html
+// API routes här om det behövs
+// app.use('/api', apiRouter);
+
+// Hantera alla andra routes
+app.get('/', (req, res) => {
+  res.sendFile(join(__dirname, 'dist', 'index.html'));
+});
+
+// Catch-all route för SPA
 app.get('*', (req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
+// Felhantering
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send('Något gick fel!');
+});
+
 // Starta servern
-app.listen(port, '0.0.0.0', () => {
-  console.log(`Server körs på port ${port}`);
-}); 
+try {
+  app.listen(port, '0.0.0.0', () => {
+    console.log(`Server körs på port ${port}`);
+  });
+} catch (error) {
+  console.error('Kunde inte starta servern:', error);
+} 

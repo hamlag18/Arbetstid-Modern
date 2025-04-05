@@ -1,12 +1,14 @@
 {
   "name": "arbetstid-modern",
   "private": true,
-  "version": "1.0.0",
+  "version": "0.0.0",
   "type": "module",
   "description": "Modern arbetstidsapp med React och Vite",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "vite preview --port $PORT",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
   "dependencies": {

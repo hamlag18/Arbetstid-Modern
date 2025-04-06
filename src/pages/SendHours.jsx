@@ -147,8 +147,7 @@ export default function SendHours() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Origin': 'https://web-production-2e81.up.railway.app'
+          'Accept': 'application/json'
         },
         credentials: 'include',
         body: JSON.stringify({

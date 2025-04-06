@@ -65,47 +65,88 @@ export default function SendHours() {
 
   const generateEmailContent = (timeReports) => {
     const totalHours = timeReports.reduce((sum, report) => sum + report.hours, 0);
+    const formattedStartDate = format(new Date(timeReports[0].date), 'd MMM', { locale: sv });
+    const formattedEndDate = format(new Date(timeReports[timeReports.length - 1].date), 'd MMM yyyy', { locale: sv });
     
     return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
-        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-          <p style="margin: 0 0 15px 0; color: #333;">Hej!</p>
-          <p style="margin: 0 0 15px 0; color: #333;">Här kommer min tidrapport:</p>
-          <p style="margin: 0 0 15px 0; color: #333;"><strong>Från:</strong> ${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
-          
-          <table style="width: 100%; border-collapse: collapse; margin: 15px 0; background-color: white;">
-            <thead>
-              <tr style="background-color: #f3f4f6;">
-                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Datum</th>
-                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Projekt</th>
-                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Material</th>
-                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Timmar</th>
-                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Kommentar</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${timeReports.map(report => `
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
-                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.project}</td>
-                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.material || '-'}</td>
-                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.hours}</td>
-                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.comment || '-'}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-            <tfoot>
-              <tr style="background-color: #f3f4f6;">
-                <td colspan="3" style="padding: 8px; text-align: right; border: 1px solid #e5e7eb; font-size: 14px;"><strong>Totalt:</strong></td>
-                <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;"><strong>${totalHours}</strong></td>
-                <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;"></td>
-              </tr>
-            </tfoot>
-          </table>
-          
-          <p style="margin: 15px 0 0 0; color: #333;">Med vänliga hälsningar,<br>${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
-        </div>
-      </div>
+    <html>
+        <head>
+            <style>
+                body { 
+                    font-family: Arial, sans-serif;
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding: 20px;
+                    background-color: #f9f9f9;
+                }
+                .container {
+                    background-color: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }
+                h2 {
+                    color: #333;
+                    margin-bottom: 10px;
+                }
+                p {
+                    color: #666;
+                    margin-bottom: 20px;
+                }
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    background-color: white;
+                }
+                th, td {
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    text-align: left;
+                    font-size: 14px;
+                }
+                th {
+                    background-color: #f5f5f5;
+                    font-weight: bold;
+                }
+                tr:nth-child(even) {
+                    background-color: #f9f9f9;
+                }
+                .total {
+                    font-weight: bold;
+                    margin-top: 20px;
+                    padding: 10px;
+                    background-color: #f5f5f5;
+                    border-radius: 4px;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h2>Tidrapport för perioden ${formattedStartDate} - ${formattedEndDate}</h2>
+                <p>Användare: ${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
+                <table>
+                    <tr>
+                        <th>Datum</th>
+                        <th>Projekt</th>
+                        <th>Timmar</th>
+                        <th>Material</th>
+                        <th>Kommentar</th>
+                    </tr>
+                    ${timeReports.map(report => `
+                        <tr>
+                            <td>${format(new Date(report.date), 'yyyy-MM-dd')}</td>
+                            <td>${report.project}</td>
+                            <td>${report.hours}</td>
+                            <td>${report.material || '-'}</td>
+                            <td>${report.comment || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </table>
+                <div class="total">Totalt antal timmar: ${totalHours.toFixed(2)}</div>
+            </div>
+        </body>
+    </html>
     `;
   };
 

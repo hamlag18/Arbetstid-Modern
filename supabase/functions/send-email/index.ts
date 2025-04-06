@@ -3,7 +3,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 const corsHeaders = {
   'Access-Control-Allow-Origin': 'https://web-production-2e81.up.railway.app',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Allow-Credentials': 'true',
   'Content-Type': 'application/json'
 }
 
@@ -16,6 +17,9 @@ serve(async (req) => {
     })
   }
 
+  // Lägg till CORS headers för alla svar
+  const responseHeaders = { ...corsHeaders }
+
   try {
     console.log('Tar emot förfrågan...')
     const { recipient, subject, content, from } = await req.json()
@@ -27,7 +31,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'Saknade fält' }),
         { 
           status: 400,
-          headers: corsHeaders
+          headers: responseHeaders
         }
       )
     }
@@ -56,7 +60,7 @@ serve(async (req) => {
         JSON.stringify({ error: 'SMTP-konfiguration saknas' }),
         { 
           status: 500,
-          headers: corsHeaders
+          headers: responseHeaders
         }
       )
     }
@@ -94,7 +98,7 @@ serve(async (req) => {
         JSON.stringify({ success: true }),
         { 
           status: 200,
-          headers: corsHeaders
+          headers: responseHeaders
         }
       )
     } catch (emailError) {
@@ -106,7 +110,7 @@ serve(async (req) => {
         }),
         { 
           status: 500,
-          headers: corsHeaders
+          headers: responseHeaders
         }
       )
     }
@@ -122,7 +126,7 @@ serve(async (req) => {
       }),
       { 
         status: 500,
-        headers: corsHeaders
+        headers: responseHeaders
       }
     )
   }

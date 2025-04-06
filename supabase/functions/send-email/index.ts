@@ -1,7 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 
+const corsOrigin = Deno.env.get('CORS_ORIGIN') || 'https://web-production-2e81.up.railway.app'
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://web-production-2e81.up.railway.app',
+  'Access-Control-Allow-Origin': corsOrigin,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
   'Access-Control-Allow-Credentials': 'true',

@@ -67,40 +67,44 @@ export default function SendHours() {
     const totalHours = timeReports.reduce((sum, report) => sum + report.hours, 0);
     
     return `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <p>Hej!</p>
-        <p>Här kommer min tidrapport:</p>
-        <p><strong>Från:</strong> ${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <thead>
-            <tr style="background-color: #f3f4f6;">
-              <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">Datum</th>
-              <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">Projekt</th>
-              <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">Material</th>
-              <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">Timmar</th>
-              <th style="padding: 10px; text-align: left; border: 1px solid #e5e7eb;">Kommentar</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${timeReports.map(report => `
-              <tr>
-                <td style="padding: 10px; border: 1px solid #e5e7eb;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb;">${report.project}</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb;">${report.material}</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb;">${report.hours}</td>
-                <td style="padding: 10px; border: 1px solid #e5e7eb;">${report.comment}</td>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <p style="margin: 0 0 15px 0; color: #333;">Hej!</p>
+          <p style="margin: 0 0 15px 0; color: #333;">Här kommer min tidrapport:</p>
+          <p style="margin: 0 0 15px 0; color: #333;"><strong>Från:</strong> ${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
+          
+          <table style="width: 100%; border-collapse: collapse; margin: 15px 0; background-color: white;">
+            <thead>
+              <tr style="background-color: #f3f4f6;">
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Datum</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Projekt</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Material</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Timmar</th>
+                <th style="padding: 8px; text-align: left; border: 1px solid #e5e7eb; font-size: 14px;">Kommentar</th>
               </tr>
-            `).join('')}
-          </tbody>
-          <tfoot>
-            <tr style="background-color: #f3f4f6;">
-              <td colspan="3" style="padding: 10px; text-align: right; border: 1px solid #e5e7eb;"><strong>Totalt:</strong></td>
-              <td style="padding: 10px; border: 1px solid #e5e7eb;"><strong>${totalHours}</strong></td>
-              <td style="padding: 10px; border: 1px solid #e5e7eb;"></td>
-            </tr>
-          </tfoot>
-        </table>
-        <p>Med vänliga hälsningar,<br>${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
+            </thead>
+            <tbody>
+              ${timeReports.map(report => `
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
+                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.project}</td>
+                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.material || '-'}</td>
+                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.hours}</td>
+                  <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;">${report.comment || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background-color: #f3f4f6;">
+                <td colspan="3" style="padding: 8px; text-align: right; border: 1px solid #e5e7eb; font-size: 14px;"><strong>Totalt:</strong></td>
+                <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;"><strong>${totalHours}</strong></td>
+                <td style="padding: 8px; border: 1px solid #e5e7eb; font-size: 14px;"></td>
+              </tr>
+            </tfoot>
+          </table>
+          
+          <p style="margin: 15px 0 0 0; color: #333;">Med vänliga hälsningar,<br>${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
+        </div>
       </div>
     `;
   };

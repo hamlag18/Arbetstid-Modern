@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays, getWeek } from "date-fns";
 import { sv } from "date-fns/locale";
 import supabase from "../supabase";
 import { Card, CardContent } from '../components/ui/card';
@@ -68,37 +68,63 @@ export default function SendHours() {
     const formattedStartDate = format(new Date(timeReports[0].date), 'd MMM', { locale: sv });
     const formattedEndDate = format(new Date(timeReports[timeReports.length - 1].date), 'd MMM yyyy', { locale: sv });
     
+    // Gruppera rapporter per vecka
+    const reportsByWeek = timeReports.reduce((weeks, report) => {
+      const weekNumber = getWeek(new Date(report.date));
+      if (!weeks[weekNumber]) {
+        weeks[weekNumber] = [];
+      }
+      weeks[weekNumber].push(report);
+      return weeks;
+    }, {});
+
+    // Sortera rapporterna inom varje vecka efter datum
+    Object.keys(reportsByWeek).forEach(week => {
+      reportsByWeek[week].sort((a, b) => new Date(a.date) - new Date(b.date));
+    });
+
     return `
     <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
         <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-            <h2 style="color: #333; margin-bottom: 10px;">Tidrapport för perioden ${formattedStartDate} - ${formattedEndDate}</h2>
-            <p style="color: #666; margin-bottom: 20px;">Användare: ${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
+            <div style="margin-bottom: 20px;">
+                <h2 style="color: #333; margin: 0;">Tidrapport</h2>
+                <p style="color: #666; margin: 5px 0;">Från: ${user?.user_metadata?.full_name || user?.email || 'Användare'}</p>
+                <p style="color: #666; margin: 5px 0;">Period: ${formattedStartDate} - ${formattedEndDate}</p>
+            </div>
             
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; background-color: white;">
-                <thead>
-                    <tr style="background-color: #f5f5f5;">
-                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Datum</th>
-                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Projekt</th>
-                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Timmar</th>
-                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Material</th>
-                        <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Kommentar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${timeReports.map(report => `
-                        <tr style="background-color: ${timeReports.indexOf(report) % 2 === 0 ? 'white' : '#f9f9f9'};">
-                            <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.project}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.hours}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.material || '-'}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.comment || '-'}</td>
-                        </tr>
-                    `).join('')}
-                </tbody>
-            </table>
+            ${Object.entries(reportsByWeek).map(([week, reports]) => `
+                <div style="margin-bottom: 30px;">
+                    <h3 style="color: #444; margin-bottom: 10px;">Vecka ${week}</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background-color: #f5f5f5;">
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Datum</th>
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Projekt</th>
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Timmar</th>
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Material</th>
+                                <th style="padding: 8px; text-align: left; border: 1px solid #ddd; font-size: 14px;">Kommentar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${reports.map(report => `
+                                <tr style="background-color: ${reports.indexOf(report) % 2 === 0 ? 'white' : '#f9f9f9'};">
+                                    <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.project}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.hours}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.material || '-'}</td>
+                                    <td style="padding: 8px; border: 1px solid #ddd; font-size: 14px;">${report.comment || '-'}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="text-align: right; margin-bottom: 10px;">
+                        <strong>Veckans totalt: ${reports.reduce((sum, report) => sum + report.hours, 0).toFixed(2)} timmar</strong>
+                    </div>
+                </div>
+            `).join('')}
             
-            <div style="font-weight: bold; margin-top: 20px; padding: 10px; background-color: #f5f5f5; border-radius: 4px;">
-                Totalt antal timmar: ${totalHours.toFixed(2)}
+            <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 4px;">
+                <strong style="font-size: 16px;">Totalt antal timmar: ${totalHours.toFixed(2)}</strong>
             </div>
         </div>
     </div>

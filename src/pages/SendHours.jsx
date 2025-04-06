@@ -143,7 +143,7 @@ export default function SendHours() {
 
       const emailContent = generateEmailContent(reportsWithProjects);
 
-      const response = await fetch('https://email-server-production-a333.up.railway.app/send-email', {
+      const response = await fetch('https://email-server-production-a333.up.railway.app', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -153,8 +153,7 @@ export default function SendHours() {
         body: JSON.stringify({
           recipient: 'hampus.lagerstrom@gmail.com',
           subject: `Tidrapport ${format(new Date(selectedDates[0]), 'd MMM', { locale: sv })} - ${format(new Date(selectedDates[selectedDates.length - 1]), 'd MMM yyyy', { locale: sv })}`,
-          content: emailContent,
-          from: user?.email || 'arbetstid@example.com'
+          content: emailContent
         }),
       });
 

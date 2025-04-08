@@ -65,79 +65,68 @@ export default function SendHours() {
 
   const generateEmailContent = (timeReports) => {
     const sortedReports = [...timeReports].sort((a, b) => new Date(a.date) - new Date(b.date));
+    const startDate = format(new Date(sortedReports[0].date), 'yyyy-MM-dd');
+    const endDate = format(new Date(sortedReports[sortedReports.length - 1].date), 'yyyy-MM-dd');
+    
+    // Gruppera rapporter per vecka
     const weeklyReports = {};
     sortedReports.forEach(report => {
       const date = new Date(report.date);
-      const weekStart = format(startOfWeek(date, { weekStartsOn: 1 }), 'yyyy-MM-dd');
-      const weekKey = `${weekStart}`;
-
-      if (!weeklyReports[weekKey]) {
-        weeklyReports[weekKey] = {
-          start: weekStart,
-          reports: []
-        };
+      const weekNumber = getWeek(date, { weekStartsOn: 1 });
+      if (!weeklyReports[weekNumber]) {
+        weeklyReports[weekNumber] = [];
       }
-      weeklyReports[weekKey].reports.push(report);
+      weeklyReports[weekNumber].push(report);
     });
 
     let emailContent = `
-      <div style="font-family: Inter, sans-serif; max-width: 700px; margin: 0 auto; padding: 24px; background-color: #fff; color: #37352f;">
-        <h1 style="font-size: 18px; font-weight: 600; margin-bottom: 4px;">Tidrapport</h1>
-        <p style="font-size: 12px; color: #6e6e6e; margin-bottom: 12px;">
-          ${format(new Date(sortedReports[0].date), 'd MMM', { locale: sv })} – ${format(new Date(sortedReports[sortedReports.length - 1].date), 'd MMM yyyy', { locale: sv })}
-        </p>
-        <p style="font-size: 12px; color: #6e6e6e; margin-bottom: 24px;">
-          Från: ${user?.user_metadata?.full_name || user?.email || 'Användare'}
-        </p>
+      <div style="font-family: Arial, sans-serif;">
+        <div style="background-color: #f8f9fa; padding: 20px; margin-bottom: 20px;">
+          <h1 style="font-size: 16px; margin: 0; font-weight: normal;">Tidrapport för perioden</h1>
+          <p style="margin: 8px 0 0 0; font-size: 14px;">${startDate} - ${endDate}</p>
+        </div>
     `;
 
-    Object.values(weeklyReports).forEach(week => {
+    Object.entries(weeklyReports).forEach(([weekNumber, reports]) => {
       emailContent += `
-        <div style="margin-bottom: 16px;">
-          <h2 style="font-size: 13px; font-weight: 500; margin: 0 0 8px 0;">Vecka ${format(new Date(week.start), 'w', { locale: sv })}</h2>
-          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+        <div style="margin-bottom: 20px;">
+          <div style="background-color: #f8f9fa; padding: 8px; margin-bottom: 8px;">
+            <span style="font-size: 14px;">V.${weekNumber}</span>
+          </div>
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
             <thead>
-              <tr style="background-color: #f4f4f4;">
-                <th style="text-align: left; padding: 4px; border-bottom: 1px solid #e0e0e0;">Datum</th>
-                <th style="text-align: left; padding: 4px; border-bottom: 1px solid #e0e0e0;">Projekt</th>
-                <th style="text-align: right; padding: 4px; border-bottom: 1px solid #e0e0e0;">Timmar</th>
-                <th style="text-align: left; padding: 4px; border-bottom: 1px solid #e0e0e0;">Material</th>
-                <th style="text-align: left; padding: 4px; border-bottom: 1px solid #e0e0e0;">Kommentar</th>
+              <tr>
+                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Datum</th>
+                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Projekt</th>
+                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Timmar</th>
+                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Material</th>
+                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Kommentar</th>
               </tr>
             </thead>
             <tbody>
-      `;
-
-      week.reports.forEach(report => {
-        emailContent += `
-              <tr>
-                <td style="padding: 4px; border-bottom: 1px solid #f1f1f1;">${format(new Date(report.date), 'd MMM', { locale: sv })}</td>
-                <td style="padding: 4px; border-bottom: 1px solid #f1f1f1;">${report.project}</td>
-                <td style="padding: 4px; text-align: right; border-bottom: 1px solid #f1f1f1;">${report.hours}h</td>
-                <td style="padding: 4px; border-bottom: 1px solid #f1f1f1;">${report.material || '-'}</td>
-                <td style="padding: 4px; border-bottom: 1px solid #f1f1f1;">${report.comment || '-'}</td>
-              </tr>
-        `;
-      });
-
-      const weekTotal = week.reports.reduce((sum, report) => sum + report.hours, 0);
-      emailContent += `
+              ${reports.map(report => `
+                <tr>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.project}</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.hours}</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.material || ''}</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.comment || ''}</td>
+                </tr>
+              `).join('')}
             </tbody>
           </table>
-          <div style="text-align: right; font-size: 11px; color: #6e6e6e; margin-top: 4px;">
-            Veckans totalt: ${weekTotal.toFixed(2)}h
-          </div>
         </div>
       `;
     });
 
-    const totalHours = timeReports.reduce((sum, report) => sum + report.hours, 0);
+    const totalHours = sortedReports.reduce((sum, report) => sum + report.hours, 0);
     emailContent += `
-        <div style="margin-top: 24px; padding: 12px; background-color: #f4f4f4; border-radius: 4px;">
-          <strong style="font-size: 13px;">Totalt antal timmar: ${totalHours.toFixed(2)}h</strong>
+        <div style="margin-top: 20px;">
+          <p style="margin: 0;">Totalt antal timmar: ${totalHours}</p>
         </div>
       </div>
     `;
+
     return emailContent;
   };
 

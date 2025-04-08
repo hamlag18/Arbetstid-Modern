@@ -89,11 +89,11 @@ export default function SendHours() {
 
     Object.entries(weeklyReports).forEach(([weekNumber, reports]) => {
       emailContent += `
-        <div style="margin-bottom: 20px;">
-          <div style="background-color: #f8f9fa; padding: 8px; margin-bottom: 8px;">
+        <div style="margin-bottom: 8px;">
+          <div style="background-color: #f8f9fa; padding: 4px 8px;">
             <span style="font-size: 14px;">V.${weekNumber}</span>
           </div>
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 16px;">
+          <table style="width: 100%; border-collapse: collapse;">
             <thead>
               <tr>
                 <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Datum</th>

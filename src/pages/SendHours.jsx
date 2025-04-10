@@ -108,7 +108,7 @@ export default function SendHours() {
                 <tr>
                   <td style="padding: 8px; border: 1px solid #dee2e6;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
                   <td style="padding: 8px; border: 1px solid #dee2e6;">${report.project}</td>
-                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.hours}</td>
+                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.hours.toFixed(1)}</td>
                   <td style="padding: 8px; border: 1px solid #dee2e6;">${report.material || ''}</td>
                   <td style="padding: 8px; border: 1px solid #dee2e6;">${report.comment || ''}</td>
                 </tr>
@@ -122,7 +122,7 @@ export default function SendHours() {
     const totalHours = sortedReports.reduce((sum, report) => sum + report.hours, 0);
     emailContent += `
         <div style="margin-top: 20px;">
-          <p style="margin: 0;">Totalt antal timmar: ${totalHours}</p>
+          <p style="margin: 0;">Totalt antal timmar: ${totalHours.toFixed(1)}</p>
         </div>
       </div>
     `;

@@ -81,17 +81,17 @@ export default function SendHours() {
 
     let emailContent = `
       <div style="font-family: Arial, sans-serif;">
-        <div style="background-color: #f8f9fa; padding: 20px; margin-bottom: 20px;">
-          <h1 style="font-size: 16px; margin: 0; font-weight: normal;">Tidrapport för perioden</h1>
-          <p style="margin: 8px 0 0 0; font-size: 14px;">${startDate} - ${endDate}</p>
+        <div style="background-color: #f8f9fa; padding: 8px;">
+          <h1 style="font-size: 14px; margin: 0;">Tidrapport för perioden</h1>
+          <p style="margin: 4px 0 0 0; font-size: 14px;">${startDate} - ${endDate}</p>
         </div>
     `;
 
     Object.entries(weeklyReports).forEach(([weekNumber, reports]) => {
       emailContent += `
-        <div style="margin-bottom: 8px;">
+        <div>
           <div style="background-color: #f8f9fa; padding: 4px 8px;">
-            <span style="font-size: 14px;">V.${weekNumber}</span>
+            <span style="font-size: 14px;">Vecka ${weekNumber}</span>
           </div>
           <table style="width: 100%; border-collapse: collapse;">
             <thead>

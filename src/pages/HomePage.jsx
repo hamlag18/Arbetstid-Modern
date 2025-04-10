@@ -144,7 +144,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchReports();
-  }, [selectedUserId]);
+  }, []);
 
   const handleDateClick = async (date) => {
     const dateStr = format(date, "yyyy-MM-dd");

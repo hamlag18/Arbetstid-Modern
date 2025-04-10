@@ -64,6 +64,7 @@ export default function HomePage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   const fetchReports = async () => {
     try {
@@ -239,25 +240,41 @@ export default function HomePage() {
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
   const handleUserChange = async (userId) => {
-    setSelectedUserId(userId);
+    if (!userId) return;
+    
     setLoading(true);
+    setError(null);
     
     try {
+      // Hämta användarens tidrapporter
       const { data: reports, error: reportsError } = await supabase
         .from('time_reports')
         .select('*')
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
 
       if (reportsError) throw reportsError;
 
-      const reported = reports.filter(report => !report.sent).map(report => report.date);
-      const sent = reports.filter(report => report.sent).map(report => report.date);
+      // Uppdatera state först efter att vi har data
+      setSelectedUserId(userId);
+      setReportedDates(reports.filter(report => !report.sent).map(report => report.date));
+      setSentDates(reports.filter(report => report.sent).map(report => report.date));
+      
+      // Uppdatera användarens information
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-      setReportedDates(reported);
-      setSentDates(sent);
+      if (userError) throw userError;
+      
+      if (userData) {
+        setSelectedUser(userData);
+      }
     } catch (error) {
-      console.error("Fel vid hämtning av tidrapporter:", error);
-      setError("Kunde inte hämta tidrapporter");
+      console.error("Fel vid hämtning av data:", error);
+      setError("Kunde inte hämta användardata");
     } finally {
       setLoading(false);
     }

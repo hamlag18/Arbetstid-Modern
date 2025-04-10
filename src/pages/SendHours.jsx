@@ -70,127 +70,48 @@ export default function SendHours() {
     const totalHours = sortedReports.reduce((sum, report) => sum + report.hours, 0);
 
     return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Tidrapport</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              line-height: 1.6;
-              color: #333;
-              margin: 0;
-              padding: 0;
-              background-color: #f5f5f5;
-            }
-            .container {
-              max-width: 800px;
-              margin: 20px auto;
-              background: #ffffff;
-              border-radius: 8px;
-              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-              overflow: hidden;
-            }
-            .header {
-              background: #1a56db;
-              color: white;
-              padding: 20px;
-              text-align: center;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 24px;
-              font-weight: 600;
-            }
-            .content {
-              padding: 20px;
-            }
-            .period {
-              text-align: center;
-              margin-bottom: 20px;
-              color: #666;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin: 20px 0;
-              background: white;
-            }
-            th {
-              background: #f8f9fa;
-              color: #333;
-              font-weight: 600;
-              text-align: left;
-              padding: 12px;
-              border-bottom: 2px solid #dee2e6;
-            }
-            td {
-              padding: 12px;
-              border-bottom: 1px solid #dee2e6;
-            }
-            tr:nth-child(even) {
-              background-color: #f8f9fa;
-            }
-            .total {
-              background: #f8f9fa;
-              padding: 15px;
-              text-align: right;
-              font-weight: 600;
-              border-top: 2px solid #dee2e6;
-            }
-            .footer {
-              text-align: center;
-              padding: 20px;
-              color: #666;
-              font-size: 14px;
-              border-top: 1px solid #dee2e6;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Tidrapport</h1>
-            </div>
-            <div class="content">
-              <div class="period">
-                Period: ${format(new Date(startDate), 'd MMMM', { locale: sv })} - ${format(new Date(endDate), 'd MMMM yyyy', { locale: sv })}
-              </div>
-              <table>
-                <thead>
-                  <tr>
-                    <th>Datum</th>
-                    <th>Projekt</th>
-                    <th>Timmar</th>
-                    <th>Material</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${sortedReports.map(report => `
-                    <tr>
-                      <td>${format(new Date(report.date), 'yyyy-MM-dd')}</td>
-                      <td>${report.project}</td>
-                      <td>${report.hours.toFixed(1)}</td>
-                      <td>${report.material || '-'}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td colspan="2" class="total">Totalt antal timmar:</td>
-                    <td colspan="2" class="total">${totalHours.toFixed(1)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            <div class="footer">
-              Detta är en automatisk tidrapport från Arbetstid Modern
-            </div>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e5e5e5; border-radius: 4px;">
+        <div style="background-color: #1a56db; padding: 20px; text-align: center; border-radius: 4px 4px 0 0;">
+          <h1 style="color: white; margin: 0; font-size: 24px;">Tidrapport</h1>
+        </div>
+        
+        <div style="padding: 20px;">
+          <div style="text-align: center; margin-bottom: 20px; color: #666666;">
+            <p style="margin: 0;">Period: ${format(new Date(startDate), 'd MMMM', { locale: sv })} - ${format(new Date(endDate), 'd MMMM yyyy', { locale: sv })}</p>
           </div>
-        </body>
-      </html>
+
+          <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+            <thead>
+              <tr>
+                <th style="background-color: #f8f9fa; color: #333333; font-weight: 600; text-align: left; padding: 12px; border: 1px solid #dee2e6;">Datum</th>
+                <th style="background-color: #f8f9fa; color: #333333; font-weight: 600; text-align: left; padding: 12px; border: 1px solid #dee2e6;">Projekt</th>
+                <th style="background-color: #f8f9fa; color: #333333; font-weight: 600; text-align: left; padding: 12px; border: 1px solid #dee2e6;">Timmar</th>
+                <th style="background-color: #f8f9fa; color: #333333; font-weight: 600; text-align: left; padding: 12px; border: 1px solid #dee2e6;">Material</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${sortedReports.map((report, index) => `
+                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f8f9fa'};">
+                  <td style="padding: 12px; border: 1px solid #dee2e6;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
+                  <td style="padding: 12px; border: 1px solid #dee2e6;">${report.project}</td>
+                  <td style="padding: 12px; border: 1px solid #dee2e6;">${report.hours.toFixed(1)}</td>
+                  <td style="padding: 12px; border: 1px solid #dee2e6;">${report.material || '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" style="background-color: #f8f9fa; padding: 12px; border: 1px solid #dee2e6; text-align: right; font-weight: 600;">Totalt antal timmar:</td>
+                <td colspan="2" style="background-color: #f8f9fa; padding: 12px; border: 1px solid #dee2e6; font-weight: 600;">${totalHours.toFixed(1)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div style="text-align: center; padding: 20px; color: #666666; font-size: 14px; border-top: 1px solid #dee2e6;">
+          Detta är en automatisk tidrapport från Arbetstid Modern
+        </div>
+      </div>
     `;
   };
 

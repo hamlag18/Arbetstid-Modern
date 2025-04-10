@@ -61,6 +61,9 @@ export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [projects, setProjects] = useState({});
   const [editingReport, setEditingReport] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   const fetchReports = async () => {
     try {
@@ -73,6 +76,25 @@ export default function HomePage() {
         setError("Kunde inte hämta användarinformation");
         setLoading(false);
         return;
+      }
+
+      // Kontrollera om användaren är admin
+      const isAdminByEmail = user.email === 'tidrapport1157@gmail.com';
+      setIsAdmin(isAdminByEmail);
+      setSelectedUserId(user.id);
+
+      // Om admin, hämta alla användare
+      if (isAdminByEmail) {
+        const { data: usersData, error: usersError } = await supabase
+          .from('profiles')
+          .select('id, email, full_name')
+          .order('full_name');
+
+        if (usersError) {
+          console.error("Fel vid hämtning av användare:", usersError);
+        } else {
+          setUsers(usersData || []);
+        }
       }
 
       // Hämta alla projekt först
@@ -93,10 +115,11 @@ export default function HomePage() {
       });
       setProjects(projectsMap);
 
+      // Hämta tidrapporter baserat på vald användare
       const { data: reports, error: reportsError } = await supabase
         .from('time_reports')
         .select('*')
-        .eq('user_id', user.id);
+        .eq('user_id', selectedUserId || user.id);
 
       if (reportsError) {
         console.error("Fel vid hämtning av tidrapporter:", reportsError);
@@ -120,7 +143,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [selectedUserId]);
 
   const handleDateClick = async (date) => {
     const dateStr = format(date, "yyyy-MM-dd");
@@ -214,6 +237,31 @@ export default function HomePage() {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  const handleUserChange = async (userId) => {
+    setSelectedUserId(userId);
+    setLoading(true);
+    
+    try {
+      const { data: reports, error: reportsError } = await supabase
+        .from('time_reports')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (reportsError) throw reportsError;
+
+      const reported = reports.filter(report => !report.sent).map(report => report.date);
+      const sent = reports.filter(report => report.sent).map(report => report.date);
+
+      setReportedDates(reported);
+      setSentDates(sent);
+    } catch (error) {
+      console.error("Fel vid hämtning av tidrapporter:", error);
+      setError("Kunde inte hämta tidrapporter");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -415,12 +463,32 @@ export default function HomePage() {
         </Card>
       </div>
       
-      <button
-        onClick={handleLogout}
-        className="mt-8 text-sm text-zinc-400 hover:text-white transition-colors"
-      >
-        Logga ut
-      </button>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <div className="flex gap-4">
+            {isAdmin && (
+              <select
+                value={selectedUserId}
+                onChange={(e) => handleUserChange(e.target.value)}
+                className="bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.full_name || user.email}
+                  </option>
+                ))}
+              </select>
+            )}
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Logga ut
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -67,67 +67,131 @@ export default function SendHours() {
     const sortedReports = [...timeReports].sort((a, b) => new Date(a.date) - new Date(b.date));
     const startDate = format(new Date(sortedReports[0].date), 'yyyy-MM-dd');
     const endDate = format(new Date(sortedReports[sortedReports.length - 1].date), 'yyyy-MM-dd');
-    
-    // Gruppera rapporter per vecka
-    const weeklyReports = {};
-    sortedReports.forEach(report => {
-      const date = new Date(report.date);
-      const weekNumber = getWeek(date, { weekStartsOn: 1 });
-      if (!weeklyReports[weekNumber]) {
-        weeklyReports[weekNumber] = [];
-      }
-      weeklyReports[weekNumber].push(report);
-    });
-
-    let emailContent = `
-      <div style="font-family: Arial, sans-serif;">
-        <div style="background-color: #f8f9fa; padding: 8px;">
-          <h1 style="font-size: 14px; margin: 0;">Tidrapport för perioden</h1>
-          <p style="margin: 4px 0 0 0; font-size: 14px;">${startDate} - ${endDate}</p>
-        </div>
-    `;
-
-    Object.entries(weeklyReports).forEach(([weekNumber, reports]) => {
-      emailContent += `
-        <div>
-          <div style="background-color: #f8f9fa; padding: 4px 8px;">
-            <span style="font-size: 14px;">Vecka ${weekNumber}</span>
-          </div>
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr>
-                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Datum</th>
-                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Projekt</th>
-                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Timmar</th>
-                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Material</th>
-                <th style="text-align: left; padding: 8px; border: 1px solid #dee2e6;">Kommentar</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${reports.map(report => `
-                <tr>
-                  <td style="padding: 8px; border: 1px solid #dee2e6;">${format(new Date(report.date), 'yyyy-MM-dd')}</td>
-                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.project}</td>
-                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.hours.toFixed(1)}</td>
-                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.material || ''}</td>
-                  <td style="padding: 8px; border: 1px solid #dee2e6;">${report.comment || ''}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    });
-
     const totalHours = sortedReports.reduce((sum, report) => sum + report.hours, 0);
-    emailContent += `
-        <div style="margin-top: 20px;">
-          <p style="margin: 0;">Totalt antal timmar: ${totalHours.toFixed(1)}</p>
-        </div>
-      </div>
-    `;
 
-    return emailContent;
+    return `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Tidrapport</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              line-height: 1.6;
+              color: #333;
+              margin: 0;
+              padding: 0;
+              background-color: #f5f5f5;
+            }
+            .container {
+              max-width: 800px;
+              margin: 20px auto;
+              background: #ffffff;
+              border-radius: 8px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              overflow: hidden;
+            }
+            .header {
+              background: #1a56db;
+              color: white;
+              padding: 20px;
+              text-align: center;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              font-weight: 600;
+            }
+            .content {
+              padding: 20px;
+            }
+            .period {
+              text-align: center;
+              margin-bottom: 20px;
+              color: #666;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+              background: white;
+            }
+            th {
+              background: #f8f9fa;
+              color: #333;
+              font-weight: 600;
+              text-align: left;
+              padding: 12px;
+              border-bottom: 2px solid #dee2e6;
+            }
+            td {
+              padding: 12px;
+              border-bottom: 1px solid #dee2e6;
+            }
+            tr:nth-child(even) {
+              background-color: #f8f9fa;
+            }
+            .total {
+              background: #f8f9fa;
+              padding: 15px;
+              text-align: right;
+              font-weight: 600;
+              border-top: 2px solid #dee2e6;
+            }
+            .footer {
+              text-align: center;
+              padding: 20px;
+              color: #666;
+              font-size: 14px;
+              border-top: 1px solid #dee2e6;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1>Tidrapport</h1>
+            </div>
+            <div class="content">
+              <div class="period">
+                Period: ${format(new Date(startDate), 'd MMMM', { locale: sv })} - ${format(new Date(endDate), 'd MMMM yyyy', { locale: sv })}
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Datum</th>
+                    <th>Projekt</th>
+                    <th>Timmar</th>
+                    <th>Material</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${sortedReports.map(report => `
+                    <tr>
+                      <td>${format(new Date(report.date), 'yyyy-MM-dd')}</td>
+                      <td>${report.project}</td>
+                      <td>${report.hours.toFixed(1)}</td>
+                      <td>${report.material || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="2" class="total">Totalt antal timmar:</td>
+                    <td colspan="2" class="total">${totalHours.toFixed(1)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+            <div class="footer">
+              Detta är en automatisk tidrapport från Arbetstid Modern
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
   };
 
   const handleSend = async () => {

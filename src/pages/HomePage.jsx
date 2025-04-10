@@ -260,9 +260,9 @@ export default function HomePage() {
       setReportedDates(reports.filter(report => !report.sent).map(report => report.date));
       setSentDates(reports.filter(report => report.sent).map(report => report.date));
       
-      // Uppdatera användarens information
+      // Uppdatera användarens information från profiles-tabellen
       const { data: userData, error: userError } = await supabase
-        .from('users')
+        .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();

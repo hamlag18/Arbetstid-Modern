@@ -86,6 +86,27 @@ export default function Login() {
     }
   };
 
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) throw error;
+
+      setMessage('Återställningslänk har skickats till din e-post');
+    } catch (error) {
+      console.error('Error:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -158,6 +179,15 @@ export default function Login() {
             >
               {isLogin ? 'Skapa ett konto' : 'Har du redan ett konto? Logga in'}
             </button>
+            
+            {isLogin && (
+              <button
+                onClick={handleResetPassword}
+                className="w-full mt-4 text-sm text-zinc-400 hover:text-white transition-colors"
+              >
+                Glömt lösenord?
+              </button>
+            )}
             
             {error && (
               <p className="mt-4 text-red-500 text-sm text-center">{error}</p>

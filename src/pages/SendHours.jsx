@@ -15,6 +15,8 @@ export default function SendHours() {
   const [error, setError] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [user, setUser] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   useEffect(() => {
     fetchReports();
@@ -192,107 +194,215 @@ export default function SendHours() {
   const monthEnd = endOfMonth(currentDate);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
 
+  // Swipe handling
+  const handleTouchStart = (e) => {
+    setTouchStart(e.touches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handleNextMonth();
+    }
+    if (isRightSwipe) {
+      handlePrevMonth();
+    }
+
+    setTouchStart(null);
+    setTouchEnd(null);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
-        <p>Laddar kalender...</p>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-zinc-400">Laddar kalender...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-10 px-4">
-      <h1 className="text-3xl font-bold mb-6 text-center">Skicka Timmar</h1>
+    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-6 px-3 sm:py-10 sm:px-4">
+      <div className="w-full max-w-md">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Skicka Timmar</h1>
+          <button
+            onClick={() => navigate("/")}
+            className="text-zinc-400 hover:text-white p-2 active:bg-zinc-800 rounded-lg transition-colors"
+          >
+            ✕
+          </button>
+        </div>
 
-      <Card className="mb-8 w-full max-w-md">
-        <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <button onClick={handlePrevMonth} className="text-zinc-400 hover:text-white">
-              &lt; Föregående
-            </button>
-            <h2 className="text-xl font-semibold">
-              {format(currentDate, "MMMM yyyy", { locale: sv })}
-            </h2>
-            <button onClick={handleNextMonth} className="text-zinc-400 hover:text-white">
-              Nästa &gt;
-            </button>
-          </div>
-
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day, i) => (
-              <div key={i} className="text-center text-sm font-medium text-zinc-400">
-                {day}
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 7 }).map((_, i) => {
-              const firstDayOfMonth = startOfMonth(currentDate);
-              const firstDayOfWeek = startOfWeek(firstDayOfMonth, { locale: sv });
-              const dayToShow = addDays(firstDayOfWeek, i);
-              if (!isSameMonth(dayToShow, firstDayOfMonth)) {
-                return (
-                  <div
-                    key={i}
-                    className="aspect-square w-full text-sm font-medium rounded-md bg-zinc-800 opacity-25"
-                    style={{ minHeight: '40px' }}
-                  />
-                );
-              }
-              return null;
-            })}
-            {daysInMonth.map((date, i) => {
-              const dateStr = format(date, "yyyy-MM-dd");
-              const isSelected = selectedDates.includes(dateStr);
-              const isReported = reportedDates.includes(dateStr);
-              const isSent = sentDates.includes(dateStr);
-              const isCurrentMonth = isSameMonth(date, currentDate);
-              const isCurrentDay = isToday(date);
-
-              let buttonClass = 'bg-zinc-700 hover:bg-zinc-600';
-              if (isSelected) {
-                buttonClass = 'bg-blue-500 hover:bg-blue-600';
-              } else if (isSent) {
-                buttonClass = 'bg-green-500';
-              } else if (isReported) {
-                buttonClass = 'bg-yellow-500 hover:bg-yellow-600';
-              }
-
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleDateClick(date)}
-                  className={`aspect-square w-full text-sm font-medium rounded-md ${buttonClass} \
-                    ${!isCurrentMonth ? 'opacity-50' : ''} \
-                    ${isCurrentDay ? 'ring-2 ring-blue-500' : ''}`}
-                  style={{ minHeight: '40px' }}
-                  disabled={isSent}
+        <Card className="mb-6">
+          <CardContent className="p-4 sm:p-6">
+            <div 
+              className="touch-pan-x"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div className="flex justify-between items-center mb-4">
+                <button 
+                  onClick={handlePrevMonth} 
+                  className="text-zinc-400 hover:text-white p-2 -ml-2 active:bg-zinc-800 rounded-lg transition-colors"
                 >
-                  {format(date, "d")}
+                  &lt; Föregående
                 </button>
-              );
-            })}
+                <h2 className="text-lg sm:text-xl font-semibold">
+                  {format(currentDate, "MMMM yyyy", { locale: sv })}
+                </h2>
+                <button 
+                  onClick={handleNextMonth} 
+                  className="text-zinc-400 hover:text-white p-2 -mr-2 active:bg-zinc-800 rounded-lg transition-colors"
+                >
+                  Nästa &gt;
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day, i) => (
+                  <div key={i} className="text-center text-xs sm:text-sm font-medium text-zinc-400">
+                    {day}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-1">
+                {Array.from({ length: 7 }).map((_, i) => {
+                  const firstDayOfMonth = startOfMonth(currentDate);
+                  const firstDayOfWeek = startOfWeek(firstDayOfMonth, { locale: sv });
+                  const dayToShow = addDays(firstDayOfWeek, i);
+                  if (!isSameMonth(dayToShow, firstDayOfMonth)) {
+                    return (
+                      <div
+                        key={i}
+                        className="aspect-square w-full text-xs sm:text-sm font-medium rounded-md bg-zinc-800 opacity-25 flex items-center justify-center"
+                        style={{ minHeight: '32px', touchAction: 'manipulation' }}
+                      />
+                    );
+                  }
+                  return null;
+                })}
+                {daysInMonth.map((date, i) => {
+                  const dateStr = format(date, "yyyy-MM-dd");
+                  const isSelected = selectedDates.includes(dateStr);
+                  const isReported = reportedDates.includes(dateStr);
+                  const isSent = sentDates.includes(dateStr);
+                  const isCurrentMonth = isSameMonth(date, currentDate);
+                  const isCurrentDay = isToday(date);
+
+                  let buttonClass = 'bg-zinc-700 hover:bg-zinc-600';
+                  if (isSelected) {
+                    buttonClass = 'bg-blue-500 hover:bg-blue-600';
+                  } else if (isSent) {
+                    buttonClass = 'bg-green-500';
+                  } else if (isReported) {
+                    buttonClass = 'bg-yellow-500 hover:bg-yellow-600';
+                  }
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => handleDateClick(date)}
+                      className={`aspect-square w-full text-xs sm:text-sm font-medium rounded-md ${buttonClass} 
+                        ${!isCurrentMonth ? 'opacity-50' : ''} 
+                        ${isCurrentDay ? 'ring-2 ring-blue-500' : ''} 
+                        flex items-center justify-center`}
+                      style={{ minHeight: '32px', touchAction: 'manipulation' }}
+                      disabled={isSent}
+                    >
+                      {format(date, "d")}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs sm:text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-zinc-700 rounded"></div>
+                  <span>Ingen rapport</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-yellow-500 rounded"></div>
+                  <span>Rapporterad</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-500 rounded"></div>
+                  <span>Vald</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-green-500 rounded"></div>
+                  <span>Skickad</span>
+                </div>
+              </div>
+
+              {selectedDates.length > 0 && (
+                <div className="bg-zinc-800 rounded-lg p-4">
+                  <h3 className="font-medium mb-2">Valda datum:</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedDates.map(date => (
+                      <div 
+                        key={date}
+                        className="bg-blue-500 text-white px-2 py-1 rounded text-sm flex items-center gap-2"
+                      >
+                        <span>{format(new Date(date), "d MMM", { locale: sv })}</span>
+                        <button 
+                          onClick={() => handleDateClick(new Date(date))}
+                          className="hover:text-zinc-200 active:text-zinc-400 transition-colors"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <div className="bg-red-500 bg-opacity-20 text-red-500 p-4 rounded-lg mb-4 text-sm">
+            {error}
           </div>
-        </CardContent>
-      </Card>
+        )}
 
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-
-      <div className="flex gap-4 w-full max-w-md">
-        <button
-          onClick={handleSend}
-          disabled={sending || selectedDates.length === 0}
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50"
-        >
-          {sending ? "Skickar..." : "Skicka"}
-        </button>
-        <button
-          onClick={() => navigate("/")}
-          className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-4 rounded-lg transition-colors"
-        >
-          Tillbaka
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <button
+            onClick={handleSend}
+            disabled={sending || selectedDates.length === 0}
+            className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:bg-blue-800"
+          >
+            {sending ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                <span>Skickar...</span>
+              </div>
+            ) : (
+              "Skicka tidrapporter"
+            )}
+          </button>
+          <button
+            onClick={() => navigate("/")}
+            className="w-full sm:flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-4 rounded-lg transition-colors active:bg-zinc-800"
+          >
+            Avbryt
+          </button>
+        </div>
       </div>
     </div>
   );

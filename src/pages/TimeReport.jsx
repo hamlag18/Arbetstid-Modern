@@ -119,13 +119,21 @@ export default function TimeReport() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-4">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 text-center">Ny tidrapport</h1>
-        
-        <Card className="mb-6">
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="min-h-screen bg-zinc-900 text-white p-3 sm:p-4">
+      <div className="max-w-md mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Ny Tidrapport</h1>
+          <button
+            onClick={() => navigate("/")}
+            className="text-zinc-400 hover:text-white transition-colors"
+          >
+            ✕
+          </button>
+        </div>
+
+        <Card>
+          <CardContent className="p-4 sm:p-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label htmlFor="project" className="block text-sm font-medium mb-2">
                   Projekt
@@ -135,7 +143,7 @@ export default function TimeReport() {
                   name="project"
                   value={formData.project}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                   required
                 >
                   <option value="">Välj projekt</option>
@@ -157,15 +165,14 @@ export default function TimeReport() {
                   name="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                   required
-                  readOnly={!!new URLSearchParams(location.search).get('datum')}
                 />
               </div>
 
               <div>
                 <label htmlFor="hours" className="block text-sm font-medium mb-2">
-                  Antal timmar
+                  Timmar
                 </label>
                 <input
                   type="number"
@@ -173,55 +180,47 @@ export default function TimeReport() {
                   name="hours"
                   value={formData.hours}
                   onChange={handleChange}
-                  min="0"
                   step="0.5"
-                  className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min="0"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                   required
                 />
               </div>
 
               <div>
                 <label htmlFor="material" className="block text-sm font-medium mb-2">
-                  Material
+                  Material (valfritt)
                 </label>
                 <textarea
                   id="material"
                   name="material"
                   value={formData.material}
                   onChange={handleChange}
-                  rows="4"
-                  className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
                 />
               </div>
 
-              <div>
-                <label htmlFor="image" className="block text-sm font-medium mb-2">
-                  Bild
-                </label>
-                <input
-                  type="file"
-                  id="image"
-                  name="image"
-                  onChange={handleChange}
-                  accept="image/*"
-                  className="w-full px-4 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-zinc-700 file:text-white hover:file:bg-zinc-600"
-                />
-              </div>
+              {error && (
+                <div className="bg-red-500 bg-opacity-20 text-red-500 p-3 rounded-lg text-sm">
+                  {error}
+                </div>
+              )}
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
+                  className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
                 >
-                  {loading ? "Sparar..." : "Spara tidrapport"}
+                  {loading ? "Sparar..." : "Spara Tidrapport"}
                 </button>
                 <button
                   type="button"
                   onClick={() => navigate("/")}
-                  className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+                  className="w-full sm:flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
                 >
-                  Tillbaka
+                  Avbryt
                 </button>
               </div>
             </form>

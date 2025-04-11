@@ -343,6 +343,24 @@ export default function HomePage() {
       
       <Card className="mb-6 sm:mb-8 w-full max-w-md">
         <CardContent>
+          <div className="flex justify-between items-center mb-4">
+            <button 
+              onClick={handlePrevMonth} 
+              className="text-zinc-400 hover:text-white p-2 sm:p-0 active:bg-zinc-800 rounded-lg transition-colors"
+            >
+              &lt; Föregående
+            </button>
+            <h2 className="text-lg sm:text-xl font-semibold">
+              {format(currentDate, "MMMM yyyy", { locale: sv })}
+            </h2>
+            <button 
+              onClick={handleNextMonth} 
+              className="text-zinc-400 hover:text-white p-2 sm:p-0 active:bg-zinc-800 rounded-lg transition-colors"
+            >
+              Nästa &gt;
+            </button>
+          </div>
+
           <div className="grid grid-cols-7 gap-1 mb-2">
             {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day, i) => (
               <div key={i} className="text-center text-xs sm:text-sm font-medium text-zinc-400">

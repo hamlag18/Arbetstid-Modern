@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays, getWeek } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays, getWeek, getWeekNumber } from "date-fns";
 import { sv } from "date-fns/locale";
 import supabase from "../supabase";
 import { Card, CardContent } from '../components/ui/card';
@@ -65,39 +65,73 @@ export default function SendHours() {
     });
   };
 
-  const generateEmailContent = (timeReports) => {
+  const generateEmailContent = (timeReports, user, startDate, endDate) => {
+    // Sortera tidrapporter efter datum
     const sortedReports = [...timeReports].sort((a, b) => new Date(a.date) - new Date(b.date));
-    const startDate = format(new Date(sortedReports[0].date), 'yyyy-MM-dd');
-    const endDate = format(new Date(sortedReports[sortedReports.length - 1].date), 'yyyy-MM-dd');
-    const totalHours = sortedReports.reduce((sum, report) => sum + report.hours, 0);
+    
+    // Gruppera tidrapporter per vecka
+    const reportsByWeek = sortedReports.reduce((acc, report) => {
+      const date = new Date(report.date);
+      const weekNumber = getWeekNumber(date);
+      const weekKey = `${date.getFullYear()}-W${weekNumber}`;
+      
+      if (!acc[weekKey]) {
+        acc[weekKey] = {
+          weekNumber,
+          year: date.getFullYear(),
+          reports: []
+        };
+      }
+      
+      acc[weekKey].reports.push(report);
+      return acc;
+    }, {});
+
+    // Beräkna totala timmar
+    const totalHours = timeReports.reduce((sum, report) => sum + report.hours, 0);
+
+    // Formatera start- och slutdatum
+    const formattedStartDate = format(new Date(startDate), "d MMMM yyyy", { locale: sv });
+    const formattedEndDate = format(new Date(endDate), "d MMMM yyyy", { locale: sv });
 
     return `
-      <div>
-        <h2>Tidrapport</h2>
-        <p>Period: ${format(new Date(startDate), 'd MMMM', { locale: sv })} - ${format(new Date(endDate), 'd MMMM yyyy', { locale: sv })}</p>
-        
-        <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
-          <tr>
-            <th>Datum</th>
-            <th>Projekt</th>
-            <th>Timmar</th>
-            <th>Material</th>
-          </tr>
-          ${sortedReports.map(report => `
-            <tr>
-              <td>${format(new Date(report.date), 'yyyy-MM-dd')}</td>
-              <td>${report.project}</td>
-              <td>${report.hours.toFixed(1)}</td>
-              <td>${report.material || '-'}</td>
-            </tr>
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+          <h2 style="color: #333; margin-bottom: 20px;">Tidrapport för ${user.full_name}</h2>
+          <p style="color: #666; margin-bottom: 20px;">Period: ${formattedStartDate} - ${formattedEndDate}</p>
+          
+          ${Object.values(reportsByWeek).map(week => `
+            <div style="margin-bottom: 30px;">
+              <h3 style="color: #444; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #ddd;">
+                Vecka ${week.weekNumber}, ${week.year}
+              </h3>
+              <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                <thead>
+                  <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Datum</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Projekt</th>
+                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #dee2e6;">Timmar</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Material</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${week.reports.map(report => `
+                    <tr style="border-bottom: 1px solid #dee2e6;">
+                      <td style="padding: 8px;">${format(new Date(report.date), "yyyy-MM-dd")}</td>
+                      <td style="padding: 8px;">${report.project_name}</td>
+                      <td style="padding: 8px; text-align: right;">${report.hours.toFixed(1)}</td>
+                      <td style="padding: 8px;">${report.materials || '-'}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
           `).join('')}
-          <tr>
-            <td colspan="2"><strong>Totalt antal timmar:</strong></td>
-            <td colspan="2"><strong>${totalHours.toFixed(1)}</strong></td>
-          </tr>
-        </table>
-        
-        <p><em>Detta är en automatisk tidrapport från Arbetstid Modern</em></p>
+          
+          <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #dee2e6;">
+            <p style="font-weight: bold; text-align: right;">Totalt antal timmar: ${totalHours.toFixed(1)}</p>
+          </div>
+        </div>
       </div>
     `;
   };
@@ -138,7 +172,7 @@ export default function SendHours() {
         };
       });
 
-      const emailContent = generateEmailContent(reportsWithProjects);
+      const emailContent = generateEmailContent(reportsWithProjects, user, selectedDates[0], selectedDates[selectedDates.length - 1]);
 
       const response = await fetch('https://email-server-production-a333.up.railway.app', {
         method: 'POST',

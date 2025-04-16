@@ -69,6 +69,16 @@ export default function SendHours() {
     // Sortera tidrapporter efter datum
     const sortedReports = [...timeReports].sort((a, b) => new Date(a.date) - new Date(b.date));
     
+    // Beräkna totala timmar per projekt
+    const projectTotals = sortedReports.reduce((acc, report) => {
+      const projectName = report.project_name || 'Okänt projekt';
+      if (!acc[projectName]) {
+        acc[projectName] = 0;
+      }
+      acc[projectName] += report.hours;
+      return acc;
+    }, {});
+
     // Gruppera tidrapporter per vecka
     const reportsByWeek = sortedReports.reduce((acc, report) => {
       const date = new Date(report.date);
@@ -118,7 +128,7 @@ export default function SendHours() {
                   ${week.reports.map(report => `
                     <tr style="border-bottom: 1px solid #dee2e6;">
                       <td style="padding: 8px;">${format(new Date(report.date), "yyyy-MM-dd")}</td>
-                      <td style="padding: 8px;">${report.project_name}</td>
+                      <td style="padding: 8px;">${report.project_name || 'Okänt projekt'}</td>
                       <td style="padding: 8px; text-align: right;">${report.hours.toFixed(1)}</td>
                       <td style="padding: 8px;">${report.materials || '-'}</td>
                     </tr>
@@ -128,8 +138,18 @@ export default function SendHours() {
             </div>
           `).join('')}
           
-          <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #dee2e6;">
-            <p style="font-weight: bold; text-align: right;">Totalt antal timmar: ${totalHours.toFixed(1)}</p>
+          <div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+            <h3 style="color: #444; margin-bottom: 15px;">Summering per projekt</h3>
+            ${Object.entries(projectTotals).map(([project, hours]) => `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span style="color: #666;">${project}</span>
+                <span style="font-weight: bold;">${hours.toFixed(1)} timmar</span>
+              </div>
+            `).join('')}
+            <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6; display: flex; justify-content: space-between;">
+              <span style="font-weight: bold; color: #333;">Totalt antal timmar:</span>
+              <span style="font-weight: bold; color: #333;">${totalHours.toFixed(1)}</span>
+            </div>
           </div>
         </div>
       </div>

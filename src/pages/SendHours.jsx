@@ -71,7 +71,7 @@ export default function SendHours() {
     
     // Beräkna totala timmar per projekt
     const projectTotals = sortedReports.reduce((acc, report) => {
-      const projectName = report.project_name || 'Okänt projekt';
+      const projectName = report.project || 'Okänt projekt';
       if (!acc[projectName]) {
         acc[projectName] = 0;
       }
@@ -122,15 +122,17 @@ export default function SendHours() {
                     <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Projekt</th>
                     <th style="padding: 8px; text-align: right; border-bottom: 2px solid #dee2e6;">Timmar</th>
                     <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Material</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Kommentar</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${week.reports.map(report => `
                     <tr style="border-bottom: 1px solid #dee2e6;">
                       <td style="padding: 8px;">${format(new Date(report.date), "yyyy-MM-dd")}</td>
-                      <td style="padding: 8px;">${report.project_name || 'Okänt projekt'}</td>
+                      <td style="padding: 8px;">${report.project || 'Okänt projekt'}</td>
                       <td style="padding: 8px; text-align: right;">${report.hours.toFixed(1)}</td>
-                      <td style="padding: 8px;">${report.materials || '-'}</td>
+                      <td style="padding: 8px;">${report.material || '-'}</td>
+                      <td style="padding: 8px;">${report.comment || '-'}</td>
                     </tr>
                   `).join('')}
                 </tbody>

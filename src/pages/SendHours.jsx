@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays, getWeek, getWeekNumber } from "date-fns";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays, getWeek } from "date-fns";
 import { sv } from "date-fns/locale";
 import supabase from "../supabase";
 import { Card, CardContent } from '../components/ui/card';
@@ -72,7 +72,7 @@ export default function SendHours() {
     // Gruppera tidrapporter per vecka
     const reportsByWeek = sortedReports.reduce((acc, report) => {
       const date = new Date(report.date);
-      const weekNumber = getWeekNumber(date);
+      const weekNumber = getWeek(date, { locale: sv });
       const weekKey = `${date.getFullYear()}-W${weekNumber}`;
       
       if (!acc[weekKey]) {

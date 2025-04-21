@@ -180,6 +180,9 @@ export default function SendHours() {
 
       if (profileError) throw profileError;
 
+      // Använd full_name om det finns, annars använd e-postadressen
+      const userName = profile?.full_name || user.email || 'Användare';
+
       const { data: timeReports, error: reportsError } = await supabase
         .from('time_reports')
         .select('*')
@@ -203,7 +206,7 @@ export default function SendHours() {
         };
       });
 
-      const emailContent = generateEmailContent(reportsWithProjects, { ...user, full_name: profile.full_name }, selectedDates[0], selectedDates[selectedDates.length - 1]);
+      const emailContent = generateEmailContent(reportsWithProjects, { ...user, full_name: userName }, selectedDates[0], selectedDates[selectedDates.length - 1]);
 
       const response = await fetch('https://email-server-production-a333.up.railway.app', {
         method: 'POST',

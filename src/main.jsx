@@ -2,6 +2,8 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./index.css";
+import { AuthProvider } from "./contexts/AuthContext";
+import PrivateRoute from "./components/PrivateRoute";
 
 import HomePage from "./pages/HomePage";
 import NewProject from "./pages/NewProject";
@@ -9,20 +11,23 @@ import TimeReport from "./pages/TimeReport";
 import TimeReports from "./pages/TimeReports";
 import SendHours from "./pages/SendHours";
 import Login from "./pages/Login";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProjectManagement from "./pages/ProjectManagement";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>
-      <Routes>
-        <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-        <Route path="/nytt-projekt" element={<ProtectedRoute><NewProject /></ProtectedRoute>} />
-        <Route path="/tidrapport" element={<ProtectedRoute><TimeReport /></ProtectedRoute>} />
-        <Route path="/tidrapporter" element={<ProtectedRoute><TimeReports /></ProtectedRoute>} />
-        <Route path="/skicka-timmar" element={<ProtectedRoute><SendHours /></ProtectedRoute>} />
-        <Route path="/login" element={<Login />} />
-        {/* Här kan vi lägga till fler sidor senare */}
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          <Route path="/" element={<PrivateRoute><HomePage /></PrivateRoute>} />
+          <Route path="/nytt-projekt" element={<PrivateRoute><NewProject /></PrivateRoute>} />
+          <Route path="/tidrapport" element={<PrivateRoute><TimeReport /></PrivateRoute>} />
+          <Route path="/tidrapporter" element={<PrivateRoute><TimeReports /></PrivateRoute>} />
+          <Route path="/skicka-timmar" element={<PrivateRoute><SendHours /></PrivateRoute>} />
+          <Route path="/project-management" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
+          <Route path="/projects" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
+          <Route path="/login" element={<Login />} />
+        </Routes>
+      </AuthProvider>
     </Router>
   </React.StrictMode>
 );

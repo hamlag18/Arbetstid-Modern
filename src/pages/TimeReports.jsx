@@ -31,7 +31,7 @@ export default function TimeReports() {
         // Hämta alla projekt först
         const { data: projectsData, error: projectsError } = await supabase
           .from('projects')
-          .select('id, name, address');
+          .select('id, name');
 
         if (projectsError) {
           console.error("Fel vid hämtning av projekt:", projectsError);
@@ -134,9 +134,6 @@ export default function TimeReports() {
                         <h2 className="text-xl font-semibold mb-1">
                           {project?.name || "Okänt projekt"}
                         </h2>
-                        <p className="text-zinc-400 text-sm">
-                          {project?.address || "Ingen adress angiven"}
-                        </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium">{formatDate(report.date)}</p>

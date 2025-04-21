@@ -8,11 +8,10 @@ import { useAuth } from '../contexts/AuthContext';
 
 export default function ProjectManagement() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [editingProject, setEditingProject] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -24,21 +23,13 @@ export default function ProjectManagement() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Hämta inloggad användare
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        
-        if (userError) {
-          console.error("Fel vid hämtning av användare:", userError);
-          setError("Kunde inte hämta användarinformation");
+        if (!user) {
+          setError("Du måste vara inloggad för att hantera projekt");
           setLoading(false);
           return;
         }
 
-        // Kontrollera om användaren är admin baserat på e-post
-        const isAdminByEmail = user.email === 'tidrapport1157@gmail.com';
-        setIsAdmin(isAdminByEmail);
-
-        if (!isAdminByEmail) {
+        if (!isAdmin) {
           setError("Du har inte behörighet att hantera projekt");
           setLoading(false);
           return;
@@ -67,7 +58,7 @@ export default function ProjectManagement() {
     };
 
     fetchData();
-  }, []);
+  }, [user, isAdmin]);
 
   const handleStatusChange = async (projectId, newStatus) => {
     try {

@@ -37,7 +37,7 @@ export default function TimeReport() {
       try {
         const { data, error } = await supabase
           .from('projects')
-          .select('id, name, address')
+          .select('id, name')
           .order('name');
 
         if (error) {
@@ -151,7 +151,7 @@ export default function TimeReport() {
                   <option value="">Välj projekt</option>
                   {projects.map(project => (
                     <option key={project.id} value={project.id}>
-                      {project.name} - {project.address}
+                      {project.name}
                     </option>
                   ))}
                 </select>

@@ -186,7 +186,8 @@ export default function SendHours() {
       const { data: timeReports, error: reportsError } = await supabase
         .from('time_reports')
         .select('*')
-        .in('date', selectedDates);
+        .in('date', selectedDates)
+        .eq('user_id', user.id);
 
       if (reportsError) throw reportsError;
 

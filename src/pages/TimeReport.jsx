@@ -11,6 +11,7 @@ export default function TimeReport() {
     date: "",
     hours: "",
     material: "",
+    comment: "",
     image: null
   });
   const [projects, setProjects] = useState([]);
@@ -98,6 +99,7 @@ export default function TimeReport() {
             date: formData.date,
             hours: parseFloat(formData.hours),
             materials: formData.material,
+            comment: formData.comment,
             project: formData.project,
             user_id: user.id
           }
@@ -195,6 +197,20 @@ export default function TimeReport() {
                   id="material"
                   name="material"
                   value={formData.material}
+                  onChange={handleChange}
+                  rows="3"
+                  className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="comment" className="block text-sm font-medium mb-2">
+                  Kommentar (valfritt)
+                </label>
+                <textarea
+                  id="comment"
+                  name="comment"
+                  value={formData.comment}
                   onChange={handleChange}
                   rows="3"
                   className="w-full px-3 py-2 rounded-lg bg-zinc-800 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-base"

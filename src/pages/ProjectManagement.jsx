@@ -211,9 +211,18 @@ export default function ProjectManagement() {
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Projekthantering
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Button
+            variant="outlined"
+            onClick={() => navigate("/")}
+            sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)' } }}
+          >
+            ← Tillbaka
+          </Button>
+          <Typography variant="h4" component="h1">
+            Projekthantering
+          </Typography>
+        </Box>
         <Button
           variant="contained"
           startIcon={<AddIcon />}

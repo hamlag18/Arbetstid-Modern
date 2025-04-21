@@ -406,6 +406,17 @@ export default function HomePage() {
       </Card>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md mb-6">
+        {isAdmin && (
+          <Card
+            className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
+            onClick={() => navigate("/project-management")}
+          >
+            <CardContent className="p-4 sm:p-6 text-center">
+              <span className="text-lg sm:text-xl">⚙️ Projekthantering</span>
+            </CardContent>
+          </Card>
+        )}
+
         <Card
           className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
           onClick={() => navigate("/nytt-projekt")}

@@ -171,6 +171,15 @@ export default function SendHours() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user?.email) throw new Error('Ingen inloggad användare');
 
+      // Hämta användarens profil för att få fullständigt namn
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
       const { data: timeReports, error: reportsError } = await supabase
         .from('time_reports')
         .select('*')
@@ -194,7 +203,7 @@ export default function SendHours() {
         };
       });
 
-      const emailContent = generateEmailContent(reportsWithProjects, user, selectedDates[0], selectedDates[selectedDates.length - 1]);
+      const emailContent = generateEmailContent(reportsWithProjects, { ...user, full_name: profile.full_name }, selectedDates[0], selectedDates[selectedDates.length - 1]);
 
       const response = await fetch('https://email-server-production-a333.up.railway.app', {
         method: 'POST',

@@ -88,8 +88,8 @@ export default function ProjectManagement() {
           .from('projects')
           .update({
             name: editingProject.name,
-            address: editingProject.address,
-            description: editingProject.description
+            description: editingProject.description,
+            status: editingProject.status
           })
           .eq('id', project.id);
 

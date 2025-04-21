@@ -168,13 +168,21 @@ export default function ProjectManagement() {
       if (editingProject) {
         const { error } = await supabase
           .from('projects')
-          .update(formData)
+          .update({
+            name: formData.name,
+            description: formData.description,
+            status: formData.status
+          })
           .eq('id', editingProject.id);
         if (error) throw error;
       } else {
         const { error } = await supabase
           .from('projects')
-          .insert([formData]);
+          .insert([{
+            name: formData.name,
+            description: formData.description,
+            status: formData.status
+          }]);
         if (error) throw error;
       }
       handleCloseDialog();

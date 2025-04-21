@@ -60,12 +60,12 @@ export default function ProjectManagement() {
 
   const fetchProjectHours = async (projectId) => {
     try {
-      // Hämta tidrapporter med användarinformation i en enda fråga
+      // Hämta tidrapporter med användarinformation
       const { data: timeReports, error: timeReportsError } = await supabase
         .from('time_reports')
         .select(`
           *,
-          profiles!time_reports_user_id_fkey (
+          profiles (
             full_name,
             email
           )

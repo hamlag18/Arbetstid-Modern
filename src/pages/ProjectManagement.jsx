@@ -350,6 +350,11 @@ export default function ProjectManagement() {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
+            <Paper sx={{ p: 2, mb: 2, bgcolor: 'primary.light', color: 'primary.contrastText' }}>
+              <Typography variant="h6">
+                Totalt: {projectHours.reduce((sum, report) => sum + report.hours, 0).toFixed(1)} timmar
+              </Typography>
+            </Paper>
             {projectHours.map((report) => (
               <Paper key={report.id} sx={{ p: 2, mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>

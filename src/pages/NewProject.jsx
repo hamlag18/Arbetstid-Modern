@@ -22,22 +22,13 @@ export default function NewProject() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Hämta användarens ID
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error("Fel vid hämtning av användare:", userError);
-        return;
-      }
-
       const { data, error } = await supabase
         .from("projects")
         .insert([
           {
             name: formData.projectName,
-            address: formData.address,
             description: formData.description,
-            user_id: user.id
+            status: 'active'
           }
         ]);
 

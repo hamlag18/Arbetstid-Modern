@@ -173,7 +173,8 @@ export default function ProjectManagement() {
             description: formData.description,
             status: formData.status
           })
-          .eq('id', editingProject.id);
+          .eq('id', editingProject.id)
+          .select('id, name, description, status, created_at, updated_at');
         if (error) throw error;
       } else {
         const { error } = await supabase
@@ -182,7 +183,8 @@ export default function ProjectManagement() {
             name: formData.name,
             description: formData.description,
             status: formData.status
-          }]);
+          }])
+          .select('id, name, description, status, created_at, updated_at');
         if (error) throw error;
       }
       handleCloseDialog();

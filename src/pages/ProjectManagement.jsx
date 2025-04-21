@@ -188,7 +188,7 @@ export default function ProjectManagement() {
         if (error) throw error;
       }
       handleCloseDialog();
-      fetchProjects();
+      fetchData();
     } catch (error) {
       console.error('Error saving project:', error.message);
     }

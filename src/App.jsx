@@ -20,7 +20,7 @@ function App() {
           <Route path="/time-report" element={<PrivateRoute><TimeReport /></PrivateRoute>} />
           <Route path="/send-hours" element={<PrivateRoute><SendHours /></PrivateRoute>} />
           <Route path="/project-management" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
-          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

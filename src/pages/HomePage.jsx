@@ -409,7 +409,7 @@ export default function HomePage() {
         {isAdmin && (
           <Card
             className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-            onClick={() => navigate("/project-management")}
+            onClick={() => navigate("/projects")}
           >
             <CardContent className="p-4 sm:p-6 text-center">
               <span className="text-lg sm:text-xl">⚙️ Projekthantering</span>

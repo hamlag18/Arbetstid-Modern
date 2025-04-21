@@ -168,10 +168,7 @@ export default function ProjectManagement() {
       if (editingProject) {
         const { error } = await supabase
           .from('projects')
-          .update({
-            ...formData,
-            updated_at: new Date().toISOString()
-          })
+          .update(formData)
           .eq('id', editingProject.id);
         if (error) throw error;
       } else {

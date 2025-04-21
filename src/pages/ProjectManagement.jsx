@@ -69,32 +69,26 @@ export default function ProjectManagement() {
 
       if (timeReportsError) throw timeReportsError;
 
-      console.log('Tidrapporter:', timeReports);
-
       // Sedan hämta användarinformation för varje tidrapport
       const reportsWithUsers = await Promise.all(
         timeReports.map(async (report) => {
-          console.log('Hämtar användardata för user_id:', report.user_id);
-          
           const { data: userData, error: userError } = await supabase
             .from('profiles')
             .select('full_name, email')
             .eq('id', report.user_id)
             .single();
 
-          console.log('Användardata:', userData);
-          console.log('Användarerror:', userError);
-
           if (userError) {
             console.error("Fel vid hämtning av användare:", userError);
             return { ...report, profiles: { full_name: 'Okänd användare', email: null } };
           }
 
-          return { ...report, profiles: userData };
+          // Använd e-postadressen om full_name är null
+          const displayName = userData.full_name || userData.email || 'Okänd användare';
+          return { ...report, profiles: { ...userData, full_name: displayName } };
         })
       );
 
-      console.log('Slutlig data:', reportsWithUsers);
       setProjectHours(reportsWithUsers);
     } catch (error) {
       console.error("Fel vid hämtning av projektets timmar:", error);

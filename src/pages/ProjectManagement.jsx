@@ -60,20 +60,34 @@ export default function ProjectManagement() {
 
   const fetchProjectHours = async (projectId) => {
     try {
-      const { data, error } = await supabase
+      // Först hämta alla tidrapporter för projektet
+      const { data: timeReports, error: timeReportsError } = await supabase
         .from('time_reports')
-        .select(`
-          *,
-          profiles:user_id (
-            full_name,
-            email
-          )
-        `)
+        .select('*')
         .eq('project', projectId)
         .order('date', { ascending: false });
 
-      if (error) throw error;
-      setProjectHours(data || []);
+      if (timeReportsError) throw timeReportsError;
+
+      // Sedan hämta användarinformation för varje tidrapport
+      const reportsWithUsers = await Promise.all(
+        timeReports.map(async (report) => {
+          const { data: userData, error: userError } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', report.user_id)
+            .single();
+
+          if (userError) {
+            console.error("Fel vid hämtning av användare:", userError);
+            return { ...report, profiles: { full_name: 'Okänd användare', email: null } };
+          }
+
+          return { ...report, profiles: userData };
+        })
+      );
+
+      setProjectHours(reportsWithUsers);
     } catch (error) {
       console.error("Fel vid hämtning av projektets timmar:", error);
       setError("Kunde inte hämta projektets timmar");

@@ -215,7 +215,14 @@ export default function ProjectManagement() {
           <Button
             variant="outlined"
             onClick={() => navigate("/")}
-            sx={{ color: 'white', borderColor: 'white', '&:hover': { borderColor: 'white', backgroundColor: 'rgba(255, 255, 255, 0.1)' } }}
+            sx={{ 
+              color: 'black', 
+              borderColor: 'black', 
+              '&:hover': { 
+                borderColor: 'black', 
+                backgroundColor: 'rgba(0, 0, 0, 0.1)' 
+              } 
+            }}
           >
             ← Tillbaka
           </Button>

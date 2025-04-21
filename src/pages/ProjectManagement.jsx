@@ -20,43 +20,43 @@ export default function ProjectManagement() {
     status: 'active'
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        if (!user) {
-          setError("Du måste vara inloggad för att hantera projekt");
-          setLoading(false);
-          return;
-        }
-
-        if (!isAdmin) {
-          setError("Du har inte behörighet att hantera projekt");
-          setLoading(false);
-          return;
-        }
-
-        // Hämta alla projekt
-        const { data: projectsData, error: projectsError } = await supabase
-          .from('projects')
-          .select('*')
-          .order('name');
-
-        if (projectsError) {
-          console.error("Fel vid hämtning av projekt:", projectsError);
-          setError("Kunde inte hämta projektinformation");
-          setLoading(false);
-          return;
-        }
-
-        setProjects(projectsData || []);
+  const fetchData = async () => {
+    try {
+      if (!user) {
+        setError("Du måste vara inloggad för att hantera projekt");
         setLoading(false);
-      } catch (error) {
-        console.error("Ett fel uppstod:", error);
-        setError("Ett oväntat fel uppstod");
-        setLoading(false);
+        return;
       }
-    };
 
+      if (!isAdmin) {
+        setError("Du har inte behörighet att hantera projekt");
+        setLoading(false);
+        return;
+      }
+
+      // Hämta alla projekt
+      const { data: projectsData, error: projectsError } = await supabase
+        .from('projects')
+        .select('*')
+        .order('name');
+
+      if (projectsError) {
+        console.error("Fel vid hämtning av projekt:", projectsError);
+        setError("Kunde inte hämta projektinformation");
+        setLoading(false);
+        return;
+      }
+
+      setProjects(projectsData || []);
+      setLoading(false);
+    } catch (error) {
+      console.error("Ett fel uppstod:", error);
+      setError("Ett oväntat fel uppstod");
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, [user, isAdmin]);
 

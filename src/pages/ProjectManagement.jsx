@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import supabase from "../supabase";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, IconButton, Typography, Box, Paper } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function ProjectManagement() {
@@ -14,6 +14,8 @@ export default function ProjectManagement() {
   const [error, setError] = useState(null);
   const [editingProject, setEditingProject] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [projectHours, setProjectHours] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -54,6 +56,33 @@ export default function ProjectManagement() {
       setError("Ett oväntat fel uppstod");
       setLoading(false);
     }
+  };
+
+  const fetchProjectHours = async (projectId) => {
+    try {
+      const { data, error } = await supabase
+        .from('time_reports')
+        .select(`
+          *,
+          profiles:user_id (
+            full_name,
+            email
+          )
+        `)
+        .eq('project', projectId)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      setProjectHours(data || []);
+    } catch (error) {
+      console.error("Fel vid hämtning av projektets timmar:", error);
+      setError("Kunde inte hämta projektets timmar");
+    }
+  };
+
+  const handleViewHours = async (project) => {
+    setSelectedProject(project);
+    await fetchProjectHours(project.id);
   };
 
   useEffect(() => {
@@ -280,6 +309,9 @@ export default function ProjectManagement() {
                   </Typography>
                 </Box>
                 <Box>
+                  <IconButton onClick={() => handleViewHours(project)}>
+                    <AccessTimeIcon />
+                  </IconButton>
                   <IconButton onClick={() => handleOpenDialog(project)}>
                     <EditIcon />
                   </IconButton>
@@ -292,6 +324,51 @@ export default function ProjectManagement() {
           ))}
         </Box>
       )}
+
+      <Dialog 
+        open={!!selectedProject} 
+        onClose={() => setSelectedProject(null)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Timmar för {selectedProject?.name}
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            {projectHours.map((report) => (
+              <Paper key={report.id} sx={{ p: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box>
+                    <Typography variant="subtitle1">
+                      {report.profiles?.full_name || 'Okänd användare'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {new Date(report.date).toLocaleDateString('sv-SE')}
+                    </Typography>
+                    {report.materials && (
+                      <Typography variant="body2" color="text.secondary">
+                        Material: {report.materials}
+                      </Typography>
+                    )}
+                    {report.comment && (
+                      <Typography variant="body2" color="text.secondary">
+                        Kommentar: {report.comment}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Typography variant="h6">
+                    {report.hours}h
+                  </Typography>
+                </Box>
+              </Paper>
+            ))}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSelectedProject(null)}>Stäng</Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>

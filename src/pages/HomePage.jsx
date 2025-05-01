@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { sv } from "date-fns/locale";
 import supabase from "../supabase";
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 function Card({ children, className = "", ...props }) {
   return (
@@ -336,246 +337,267 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white flex flex-col items-center py-6 px-3 sm:py-10 sm:px-4">
-      <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center bg-red-500 p-3 sm:p-4 rounded-lg w-full max-w-md">
-        Tidrapportering
-      </h1>
-      
-      <Card className="mb-6 sm:mb-8 w-full max-w-md">
-        <CardContent>
-          <div className="flex justify-between items-center mb-4">
-            <button 
-              onClick={handlePrevMonth} 
-              className="text-zinc-400 hover:text-white p-2 sm:p-0 active:bg-zinc-800 rounded-lg transition-colors"
+    <div className="min-h-screen bg-zinc-900 text-white">
+      <div className="max-w-screen-sm mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Tidrapporter</h1>
+          <div className="flex gap-3 w-full sm:w-auto">
+            <button
+              onClick={() => navigate("/tidrapport")}
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors text-base sm:text-lg"
             >
-              &lt; Föregående
+              Ny tidrapport
             </button>
-            <h2 className="text-lg sm:text-xl font-semibold">
-              {format(currentDate, "MMMM yyyy", { locale: sv })}
-            </h2>
-            <button 
-              onClick={handleNextMonth} 
-              className="text-zinc-400 hover:text-white p-2 sm:p-0 active:bg-zinc-800 rounded-lg transition-colors"
+            <button
+              onClick={() => navigate("/tidrapporter")}
+              className="w-full sm:w-auto bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-6 rounded-lg transition-colors text-base sm:text-lg"
             >
-              Nästa &gt;
+              Visa tidrapporter
             </button>
           </div>
+        </div>
 
-          <div className="grid grid-cols-7 gap-1 mb-2">
-            {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day, i) => (
-              <div key={i} className="text-center text-xs sm:text-sm font-medium text-zinc-400">
-                {day}
-              </div>
-            ))}
-          </div>
-          
-          <div className="grid grid-cols-7 gap-1">
-            {Array.from({ length: 7 }).map((_, i) => {
-              const firstDayOfMonth = startOfMonth(currentDate);
-              const firstDayOfWeek = startOfWeek(firstDayOfMonth, { locale: sv });
-              const dayToShow = addDays(firstDayOfWeek, i);
-              if (!isSameMonth(dayToShow, firstDayOfMonth)) {
+        <div className="bg-zinc-800 rounded-lg p-4 sm:p-6 mb-6">
+          <h2 className="text-xl sm:text-2xl font-semibold mb-4">Kalender</h2>
+          <div className="calendar-container">
+            <div className="flex justify-between items-center mb-4">
+              <button
+                onClick={handlePrevMonth}
+                className="p-2 sm:p-3 rounded-lg hover:bg-zinc-700 transition-colors"
+              >
+                <ChevronLeftIcon className="h-6 w-6" />
+              </button>
+              <h3 className="text-lg sm:text-xl font-medium">
+                {format(currentDate, "MMMM yyyy", { locale: sv })}
+              </h3>
+              <button
+                onClick={handleNextMonth}
+                className="p-2 sm:p-3 rounded-lg hover:bg-zinc-700 transition-colors"
+              >
+                <ChevronRightIcon className="h-6 w-6" />
+              </button>
+            </div>
+            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+              {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day) => (
+                <div
+                  key={day}
+                  className="text-center text-sm sm:text-base font-medium py-2"
+                >
+                  {day}
+                </div>
+              ))}
+              {Array.from({ length: 7 }).map((_, i) => {
+                const firstDayOfMonth = startOfMonth(currentDate);
+                const firstDayOfWeek = startOfWeek(firstDayOfMonth, { locale: sv });
+                const dayToShow = addDays(firstDayOfWeek, i);
+                if (!isSameMonth(dayToShow, firstDayOfMonth)) {
+                  return (
+                    <div
+                      key={`empty-${i}`}
+                      className="h-12 sm:h-16"
+                    />
+                  );
+                }
+                return null;
+              })}
+              {daysInMonth.map((date, i) => {
+                const statusClass = getDayStatus(date, reportedDates, sentDates);
+                const isCurrentMonth = isSameMonth(date, currentDate);
+                const isCurrentDay = isToday(date);
+                
                 return (
                   <div
                     key={i}
-                    className="aspect-square w-full text-xs sm:text-sm font-medium rounded-md bg-zinc-800 opacity-25 flex items-center justify-center"
-                    style={{ minHeight: '32px', touchAction: 'manipulation' }}
-                  />
+                    className={`relative h-12 sm:h-16 flex items-center justify-center rounded-lg cursor-pointer transition-colors ${
+                      isCurrentDay
+                        ? "bg-blue-600 hover:bg-blue-700"
+                        : statusClass
+                    }`}
+                    onClick={() => handleDateClick(date)}
+                  >
+                    <span className="text-sm sm:text-base">{format(date, "d")}</span>
+                    {isCurrentDay && (
+                      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full" />
+                    )}
+                  </div>
                 );
-              }
-              return null;
-            })}
-            {daysInMonth.map((date, i) => {
-              const statusClass = getDayStatus(date, reportedDates, sentDates);
-              const isCurrentMonth = isSameMonth(date, currentDate);
-              const isCurrentDay = isToday(date);
-              
-              return (
-                <button
-                  key={i}
-                  onClick={() => handleDateClick(date)}
-                  className={`aspect-square w-full text-xs sm:text-sm font-medium rounded-md ${statusClass} ${!isCurrentMonth ? 'opacity-50' : ''} ${isCurrentDay ? 'ring-2 ring-blue-500' : ''} flex items-center justify-center`}
-                  style={{ minHeight: '32px', touchAction: 'manipulation' }}
-                >
-                  {format(date, "d")}
-                </button>
-              );
-            })}
+              })}
+            </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md mb-6">
-        {isAdmin && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md mb-6">
+          {isAdmin && (
+            <Card
+              className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
+              onClick={() => navigate("/projects")}
+            >
+              <CardContent className="p-4 sm:p-6 text-center">
+                <span className="text-lg sm:text-xl">⚙️ Projekthantering</span>
+              </CardContent>
+            </Card>
+          )}
+
           <Card
             className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-            onClick={() => navigate("/projects")}
+            onClick={() => navigate("/nytt-projekt")}
           >
             <CardContent className="p-4 sm:p-6 text-center">
-              <span className="text-lg sm:text-xl">⚙️ Projekthantering</span>
+              <span className="text-lg sm:text-xl">➕ Nytt projekt</span>
             </CardContent>
           </Card>
-        )}
 
-        <Card
-          className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-          onClick={() => navigate("/nytt-projekt")}
-        >
-          <CardContent className="p-4 sm:p-6 text-center">
-            <span className="text-lg sm:text-xl">➕ Nytt projekt</span>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-          onClick={() => navigate("/skicka-timmar")}
-        >
-          <CardContent className="p-4 sm:p-6 text-center">
-            <span className="text-lg sm:text-xl">📤 Skicka Timmar</span>
-          </CardContent>
-        </Card>
-
-        <Card
-          className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation sm:col-span-2"
-          onClick={() => navigate("/tidrapporter")}
-        >
-          <CardContent className="p-4 sm:p-6 text-center">
-            <span className="text-lg sm:text-xl">📋 Visa tidrapporter</span>
-          </CardContent>
-        </Card>
-      </div>
-      
-      <div className="w-full max-w-md">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-          {isAdmin && (
-            <select
-              value={selectedUserId}
-              onChange={(e) => handleUserChange(e.target.value)}
-              className="w-full sm:w-auto bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {users.map(user => (
-                <option key={user.id} value={user.id}>
-                  {user.full_name || user.email}
-                </option>
-              ))}
-            </select>
-          )}
-          <button
-            onClick={handleLogout}
-            className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+          <Card
+            className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
+            onClick={() => navigate("/skicka-timmar")}
           >
-            Logga ut
-          </button>
-        </div>
-      </div>
+            <CardContent className="p-4 sm:p-6 text-center">
+              <span className="text-lg sm:text-xl">📤 Skicka Timmar</span>
+            </CardContent>
+          </Card>
 
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <div className="flex flex-col">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-lg sm:text-xl font-semibold">
-              {selectedDate ? format(new Date(selectedDate), "d MMMM yyyy", { locale: sv }) : ""}
-            </h2>
+          <Card
+            className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation sm:col-span-2"
+            onClick={() => navigate("/tidrapporter")}
+          >
+            <CardContent className="p-4 sm:p-6 text-center">
+              <span className="text-lg sm:text-xl">📋 Visa tidrapporter</span>
+            </CardContent>
+          </Card>
+        </div>
+        
+        <div className="w-full max-w-md">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
+            {isAdmin && (
+              <select
+                value={selectedUserId}
+                onChange={(e) => handleUserChange(e.target.value)}
+                className="w-full sm:w-auto bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {users.map(user => (
+                  <option key={user.id} value={user.id}>
+                    {user.full_name || user.email}
+                  </option>
+                ))}
+              </select>
+            )}
             <button
-              onClick={() => setIsModalOpen(false)}
-              className="text-zinc-400 hover:text-white p-2 -mr-2"
+              onClick={handleLogout}
+              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
             >
-              ✕
+              Logga ut
             </button>
           </div>
+        </div>
 
-          {selectedDateReports.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-zinc-400 mb-4">Inga tidrapporter för detta datum</p>
+        <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <div className="flex flex-col">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold">
+                {selectedDate ? format(new Date(selectedDate), "d MMMM yyyy", { locale: sv }) : ""}
+              </h2>
               <button
-                onClick={() => navigate(`/tidrapport?datum=${selectedDate}`)}
-                className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors w-full sm:w-auto"
+                onClick={() => setIsModalOpen(false)}
+                className="text-zinc-400 hover:text-white p-2 -mr-2"
               >
-                Lägg till tid
+                ✕
               </button>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {selectedDateReports.map(report => (
-                <div key={report.id} className="bg-zinc-700/50 p-4 rounded-lg">
-                  {editingReport?.id === report.id ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm mb-1">Timmar</label>
-                        <input
-                          type="number"
-                          value={editingReport.hours}
-                          onChange={(e) => setEditingReport(prev => ({ ...prev, hours: e.target.value }))}
-                          className="w-full px-3 py-2 bg-zinc-600 rounded-lg text-base"
-                          step="0.5"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm mb-1">Material</label>
-                        <textarea
-                          value={editingReport.materials || ""}
-                          onChange={(e) => setEditingReport(prev => ({ ...prev, materials: e.target.value }))}
-                          className="w-full px-3 py-2 bg-zinc-600 rounded-lg text-base"
-                          rows="2"
-                        />
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <button
-                          onClick={() => handleEdit(report)}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                        >
-                          Spara
-                        </button>
-                        <button
-                          onClick={() => setEditingReport(null)}
-                          className="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                        >
-                          Avbryt
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <h3 className="font-medium">{projects[report.project]?.name || "Okänt projekt"}</h3>
-                          <p className="text-sm text-zinc-400">{projects[report.project]?.address}</p>
-                        </div>
-                        <p className="text-lg font-medium">{report.hours}h</p>
-                      </div>
-                      {report.materials && (
-                        <p className="text-sm text-zinc-300 mt-2">Material: {report.materials}</p>
-                      )}
-                      <div className="flex gap-2 mt-3">
-                        <button
-                          onClick={() => handleEdit(report)}
-                          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                        >
-                          Redigera
-                        </button>
-                        <button
-                          onClick={() => handleDelete(report.id)}
-                          className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                        >
-                          Radera
-                        </button>
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-              
-              <div className="pt-4">
+
+            {selectedDateReports.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-zinc-400 mb-4">Inga tidrapporter för detta datum</p>
                 <button
                   onClick={() => navigate(`/tidrapport?datum=${selectedDate}`)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors w-full sm:w-auto"
                 >
                   Lägg till tid
                 </button>
               </div>
-            </div>
-          )}
-        </div>
-      </Modal>
+            ) : (
+              <div className="space-y-3">
+                {selectedDateReports.map(report => (
+                  <div key={report.id} className="bg-zinc-700/50 p-4 rounded-lg">
+                    {editingReport?.id === report.id ? (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm mb-1">Timmar</label>
+                          <input
+                            type="number"
+                            value={editingReport.hours}
+                            onChange={(e) => setEditingReport(prev => ({ ...prev, hours: e.target.value }))}
+                            className="w-full px-3 py-2 bg-zinc-600 rounded-lg text-base"
+                            step="0.5"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm mb-1">Material</label>
+                          <textarea
+                            value={editingReport.materials || ""}
+                            onChange={(e) => setEditingReport(prev => ({ ...prev, materials: e.target.value }))}
+                            className="w-full px-3 py-2 bg-zinc-600 rounded-lg text-base"
+                            rows="2"
+                          />
+                        </div>
+                        <div className="flex gap-2 pt-2">
+                          <button
+                            onClick={() => handleEdit(report)}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                          >
+                            Spara
+                          </button>
+                          <button
+                            onClick={() => setEditingReport(null)}
+                            className="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                          >
+                            Avbryt
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-medium">{projects[report.project]?.name || "Okänt projekt"}</h3>
+                            <p className="text-sm text-zinc-400">{projects[report.project]?.address}</p>
+                          </div>
+                          <p className="text-lg font-medium">{report.hours}h</p>
+                        </div>
+                        {report.materials && (
+                          <p className="text-sm text-zinc-300 mt-2">Material: {report.materials}</p>
+                        )}
+                        <div className="flex gap-2 mt-3">
+                          <button
+                            onClick={() => handleEdit(report)}
+                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                          >
+                            Redigera
+                          </button>
+                          <button
+                            onClick={() => handleDelete(report.id)}
+                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
+                          >
+                            Radera
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+                
+                <div className="pt-4">
+                  <button
+                    onClick={() => navigate(`/tidrapport?datum=${selectedDate}`)}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
+                  >
+                    Lägg till tid
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </Modal>
+      </div>
     </div>
   );
 }

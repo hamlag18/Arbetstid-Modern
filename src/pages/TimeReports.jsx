@@ -104,60 +104,59 @@ export default function TimeReports() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-900 text-white p-4">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold">Tidrapporter</h1>
+    <div className="min-h-screen bg-zinc-900 text-white">
+      <div className="max-w-screen-sm mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Tidrapporter</h1>
           <button
             onClick={() => navigate("/tidrapport")}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors text-base sm:text-lg"
           >
             Ny tidrapport
           </button>
         </div>
 
         {reports.length === 0 ? (
-          <Card>
-            <CardContent className="p-6 text-center">
-              <p className="text-lg">Inga tidrapporter hittades</p>
-            </CardContent>
-          </Card>
+          <div className="bg-zinc-800 rounded-lg p-6 text-center">
+            <p className="text-lg sm:text-xl text-zinc-400">Inga tidrapporter hittades</p>
+          </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-4">
             {reports.map((report) => {
               const project = projects[report.project];
               return (
-                <Card key={report.id} className="hover:shadow-xl transition-all">
-                  <CardContent className="p-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h2 className="text-xl font-semibold mb-1">
-                          {project?.name || "Okänt projekt"}
-                        </h2>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{formatDate(report.date)}</p>
-                        <p className="text-zinc-400">{report.hours} timmar</p>
-                      </div>
+                <div
+                  key={report.id}
+                  className="bg-zinc-800 rounded-lg p-4 sm:p-6 hover:shadow-xl transition-all"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold mb-1">
+                        {project?.name || "Okänt projekt"}
+                      </h2>
                     </div>
-                    
-                    <div className="mb-4">
-                      <h3 className="text-sm font-medium text-zinc-400 mb-1">Material</h3>
-                      <p className="whitespace-pre-line">{report.materials || "Inget material angivet"}</p>
+                    <div className="text-right">
+                      <p className="text-sm sm:text-base font-medium">{formatDate(report.date)}</p>
+                      <p className="text-sm sm:text-base text-zinc-400">{report.hours} timmar</p>
                     </div>
-                    
-                    {report.image_url && (
-                      <div className="mt-4">
-                        <h3 className="text-sm font-medium text-zinc-400 mb-2">Bild</h3>
-                        <img 
-                          src={report.image_url} 
-                          alt="Tidrapport bild" 
-                          className="max-w-full h-auto rounded-lg max-h-48 object-cover"
-                        />
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <h3 className="text-sm sm:text-base font-medium text-zinc-400 mb-1">Material</h3>
+                    <p className="text-sm sm:text-base whitespace-pre-line">{report.materials || "Inget material angivet"}</p>
+                  </div>
+                  
+                  {report.image_url && (
+                    <div className="mt-4">
+                      <h3 className="text-sm sm:text-base font-medium text-zinc-400 mb-2">Bild</h3>
+                      <img 
+                        src={report.image_url} 
+                        alt="Tidrapport bild" 
+                        className="w-full h-auto rounded-lg max-h-48 sm:max-h-64 object-cover"
+                      />
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -165,7 +164,7 @@ export default function TimeReports() {
 
         <button
           onClick={() => navigate("/")}
-          className="mt-8 text-sm text-zinc-400 hover:text-white transition-colors"
+          className="mt-8 text-sm sm:text-base text-zinc-400 hover:text-white transition-colors"
         >
           Tillbaka till startsidan
         </button>

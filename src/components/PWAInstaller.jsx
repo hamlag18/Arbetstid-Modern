@@ -4,8 +4,12 @@ export function PWAInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState('default');
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
+    // Kontrollera om det är en mobil enhet
+    setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
+
     // Registrera Service Worker
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -33,7 +37,11 @@ export function PWAInstaller() {
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      // Om det inte finns någon deferredPrompt, öppna appen i nytt fönster
+      window.open(window.location.href, '_blank');
+      return;
+    }
 
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
@@ -60,7 +68,8 @@ export function PWAInstaller() {
     }
   };
 
-  if (!showInstallButton && notificationPermission === 'granted') {
+  // Visa alltid på mobila enheter
+  if (!isMobile && !showInstallButton && notificationPermission === 'granted') {
     return null;
   }
 
@@ -77,6 +86,21 @@ export function PWAInstaller() {
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors"
           >
             Installera
+          </button>
+        </div>
+      )}
+
+      {isMobile && !showInstallButton && (
+        <div className="mb-4">
+          <h3 className="text-lg font-medium text-white mb-2">Installera Arbetstid</h3>
+          <p className="text-sm text-zinc-300 mb-3">
+            Klicka på "Dela" i din webbläsare och välj "Lägg till på hemskärmen" för att installera appen.
+          </p>
+          <button
+            onClick={handleInstallClick}
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors"
+          >
+            Öppna i app
           </button>
         </div>
       )}

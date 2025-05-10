@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bakgrundscirkel -->
+  <circle cx="256" cy="256" r="240" fill="#18181B"/>
+  
+  <!-- Klockram -->
+  <circle cx="256" cy="256" r="200" stroke="#3B82F6" stroke-width="16" fill="none"/>
+  
+  <!-- Klocktavla -->
+  <circle cx="256" cy="256" r="180" fill="#27272A"/>
+  
+  <!-- Timvisare -->
+  <line x1="256" y1="256" x2="256" y2="160" stroke="#3B82F6" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Minutvisare -->
+  <line x1="256" y1="256" x2="320" y2="256" stroke="#3B82F6" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Centrumpunkt -->
+  <circle cx="256" cy="256" r="16" fill="#3B82F6"/>
+  
+  <!-- Timmarkeringar -->
+  <g stroke="#3B82F6" stroke-width="8">
+    <line x1="256" y1="76" x2="256" y2="96"/>
+    <line x1="256" y1="416" x2="256" y2="436"/>
+    <line x1="76" y1="256" x2="96" y2="256"/>
+    <line x1="416" y1="256" x2="436" y2="256"/>
+  </g>
+</svg> 

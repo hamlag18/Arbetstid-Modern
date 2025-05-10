@@ -13,6 +13,31 @@ import SendHours from "./pages/SendHours";
 import Login from "./pages/Login";
 import ProjectManagement from "./pages/ProjectManagement";
 
+// Registrera Service Worker
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registration = await navigator.serviceWorker.register('/service-worker.js', {
+        scope: '/'
+      });
+      
+      console.log('Service Worker registrerad:', registration);
+      
+      // Kontrollera om det finns en ny version
+      registration.addEventListener('updatefound', () => {
+        const newWorker = registration.installing;
+        console.log('Ny Service Worker hittad:', newWorker);
+        
+        newWorker.addEventListener('statechange', () => {
+          console.log('Service Worker status:', newWorker.state);
+        });
+      });
+    } catch (error) {
+      console.error('Service Worker registrering misslyckades:', error);
+    }
+  });
+}
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Router>

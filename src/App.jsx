@@ -10,6 +10,7 @@ import Projects from './pages/Projects';
 import PrivateRoute from './components/PrivateRoute';
 import NotificationManager from './components/NotificationManager';
 import Settings from './pages/Settings';
+import { PWAInstaller } from './components/PWAInstaller';
 
 function App() {
   return (
@@ -27,6 +28,7 @@ function App() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <NotificationManager />
+        <PWAInstaller />
       </AuthProvider>
     </Router>
   );

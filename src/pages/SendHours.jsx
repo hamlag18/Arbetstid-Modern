@@ -23,7 +23,7 @@ function Modal({ isOpen, onClose, children }) {
             </button>
           </div>
           <div className="bg-white rounded-lg p-4">
-            <div dangerouslySetInnerHTML={{ __html: children }} />
+            <div className="text-black" dangerouslySetInnerHTML={{ __html: children }} />
           </div>
         </div>
       </div>
@@ -146,21 +146,21 @@ export default function SendHours() {
               <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                 <thead>
                   <tr style="background-color: #f8f9fa;">
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Datum</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Projekt</th>
-                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #dee2e6;">Timmar</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Material</th>
-                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6;">Kommentar</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6; color: #333;">Datum</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6; color: #333;">Projekt</th>
+                    <th style="padding: 8px; text-align: right; border-bottom: 2px solid #dee2e6; color: #333;">Timmar</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6; color: #333;">Material</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 2px solid #dee2e6; color: #333;">Kommentar</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${week.reports.map(report => `
                     <tr style="border-bottom: 1px solid #dee2e6;">
-                      <td style="padding: 8px;">${format(new Date(report.date), "yyyy-MM-dd")}</td>
-                      <td style="padding: 8px;">${report.project || 'Okänt projekt'}</td>
-                      <td style="padding: 8px; text-align: right;">${report.hours.toFixed(1)}</td>
-                      <td style="padding: 8px;">${report.material || '-'}</td>
-                      <td style="padding: 8px;">${report.comment || '-'}</td>
+                      <td style="padding: 8px; color: #333;">${format(new Date(report.date), "yyyy-MM-dd")}</td>
+                      <td style="padding: 8px; color: #333;">${report.project || 'Okänt projekt'}</td>
+                      <td style="padding: 8px; text-align: right; color: #333;">${report.hours.toFixed(1)}</td>
+                      <td style="padding: 8px; color: #333;">${report.material || '-'}</td>
+                      <td style="padding: 8px; color: #333;">${report.comment || '-'}</td>
                     </tr>
                   `).join('')}
                 </tbody>
@@ -172,8 +172,8 @@ export default function SendHours() {
             <h3 style="color: #444; margin-bottom: 15px;">Summering per projekt</h3>
             ${Object.entries(projectTotals).map(([project, hours]) => `
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                <span style="color: #666;">${project}</span>
-                <span style="font-weight: bold;">${hours.toFixed(1)} timmar</span>
+                <span style="color: #333;">${project}</span>
+                <span style="font-weight: bold; color: #333;">${hours.toFixed(1)} timmar</span>
               </div>
             `).join('')}
             <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6; display: flex; justify-content: space-between;">

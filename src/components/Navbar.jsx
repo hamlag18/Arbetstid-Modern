@@ -76,7 +76,7 @@ export default function Navbar() {
   return (
     <nav className="bg-zinc-800 border-b border-zinc-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="text-white font-bold text-xl">
               Arbetstid
@@ -87,7 +87,7 @@ export default function Navbar() {
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className="relative p-2 text-zinc-400 hover:text-white transition-colors"
+                className="p-2 text-zinc-400 hover:text-white transition-colors"
               >
                 <BellIcon className="h-6 w-6" />
                 {unreadCount > 0 && (
@@ -98,7 +98,7 @@ export default function Navbar() {
               </button>
 
               {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-zinc-800 rounded-lg shadow-lg border border-zinc-700 z-50">
+                <div className="absolute right-0 mt-2 w-80 bg-zinc-800 rounded-lg shadow-lg border border-zinc-700 py-1 z-50">
                   <div className="p-4">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-lg font-medium text-white">Notifikationer</h3>
@@ -119,14 +119,14 @@ export default function Navbar() {
                         notifications.map(notification => (
                           <div
                             key={notification.id}
-                            className={`p-3 rounded-lg ${
-                              notification.read ? 'bg-zinc-700' : 'bg-blue-500 bg-opacity-20'
+                            className={`px-4 py-2 hover:bg-zinc-700 cursor-pointer ${
+                              !notification.read ? 'bg-zinc-700/50' : ''
                             }`}
                             onClick={() => markAsRead(notification.id)}
                           >
                             <p className="text-sm text-white">{notification.message}</p>
-                            <p className="text-xs text-zinc-400 mt-1">
-                              {new Date(notification.timestamp).toLocaleString('sv-SE')}
+                            <p className="text-xs text-zinc-400">
+                              {new Date(notification.timestamp).toLocaleString()}
                             </p>
                           </div>
                         ))
@@ -139,10 +139,10 @@ export default function Navbar() {
 
             <Link
               to="/settings"
-              className="flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
+              className="p-2 text-zinc-400 hover:text-white transition-colors"
+              title="Inställningar"
             >
-              <Cog6ToothIcon className="h-5 w-5" />
-              <span>Inställningar</span>
+              <Cog6ToothIcon className="h-6 w-6" />
             </Link>
           </div>
         </div>

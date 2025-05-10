@@ -74,7 +74,7 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-zinc-800 border-b border-zinc-700">
+    <nav className="fixed top-0 left-0 right-0 bg-zinc-800 border-b border-zinc-700 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -139,10 +139,11 @@ export default function Navbar() {
 
             <Link
               to="/settings"
-              className="p-2 text-zinc-400 hover:text-white transition-colors"
+              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
               title="Inställningar"
             >
               <Cog6ToothIcon className="h-6 w-6" />
+              <span className="text-sm font-medium">Inställningar</span>
             </Link>
           </div>
         </div>

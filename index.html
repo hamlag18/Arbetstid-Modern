@@ -2,10 +2,10 @@
 <html lang="sv">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/icons/icon-192x192.png" />
+    <link rel="icon" type="image/svg+xml" href="/icons/icon-192x192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#18181b" />
-    <meta name="description" content="Tidrapportering och projektledning" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="description" content="Arbetstid - En modern tidrapporteringsapp" />
     
     <!-- PWA meta tags -->
     <link rel="manifest" href="/manifest.json" />
@@ -20,5 +20,21 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js', {
+            scope: '/',
+            type: 'module'
+          })
+          .then(registration => {
+            console.log('Service Worker registrerad:', registration);
+          })
+          .catch(error => {
+            console.error('Service Worker registrering misslyckades:', error);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

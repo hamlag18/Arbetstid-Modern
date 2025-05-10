@@ -40,6 +40,15 @@ function shouldCache(url) {
       console.log('Ignorerar specifik sökväg:', url);
       return false;
     }
+
+    // Kontrollera MIME-typ
+    const extension = urlObj.pathname.split('.').pop().toLowerCase();
+    const allowedExtensions = ['js', 'css', 'png', 'jpg', 'jpeg', 'svg', 'ico', 'json', 'html'];
+    
+    if (!allowedExtensions.includes(extension)) {
+      console.log('Ignorerar okänd filtyp:', url);
+      return false;
+    }
     
     return true;
   } catch (error) {
@@ -123,7 +132,7 @@ self.addEventListener('fetch', (event) => {
         return fetch(event.request)
           .then((response) => {
             // Kontrollera om vi fick en giltig respons
-            if (!response || response.status !== 200 || response.type !== 'basic') {
+            if (!response || response.status !== 200) {
               console.log('Ogiltig respons för:', event.request.url);
               return response;
             }

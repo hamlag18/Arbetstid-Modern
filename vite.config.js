@@ -6,7 +6,11 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 3000
+    port: 3000,
+    headers: {
+      'Service-Worker-Allowed': '/',
+      'Content-Type': 'application/javascript'
+    }
   },
   build: {
     outDir: 'dist',
@@ -14,15 +18,18 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        'service-worker': resolve(__dirname, 'public/service-worker.js')
       },
       output: {
-        entryFileNames: (chunkInfo) => {
-          return chunkInfo.name === 'service-worker' 
-            ? 'service-worker.js' 
-            : 'assets/[name]-[hash].js'
-        }
+        manualChunks: undefined,
+        entryFileNames: 'assets/[name]-[hash].js',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]'
       }
+    }
+  },
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src')
     }
   }
 }) 

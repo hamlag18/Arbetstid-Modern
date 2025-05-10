@@ -9,6 +9,7 @@ import ProjectManagement from './pages/ProjectManagement';
 import Projects from './pages/Projects';
 import PrivateRoute from './components/PrivateRoute';
 import NotificationManager from './components/NotificationManager';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/send-hours" element={<PrivateRoute><SendHours /></PrivateRoute>} />
           <Route path="/project-management" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
           <Route path="/projects" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
         <NotificationManager />

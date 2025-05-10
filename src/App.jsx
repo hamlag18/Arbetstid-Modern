@@ -8,6 +8,7 @@ import SendHours from './pages/SendHours';
 import ProjectManagement from './pages/ProjectManagement';
 import Projects from './pages/Projects';
 import PrivateRoute from './components/PrivateRoute';
+import NotificationManager from './components/NotificationManager';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           <Route path="/projects" element={<PrivateRoute><ProjectManagement /></PrivateRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <NotificationManager />
       </AuthProvider>
     </Router>
   );

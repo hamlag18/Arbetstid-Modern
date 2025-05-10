@@ -5,6 +5,32 @@ import { sv } from "date-fns/locale";
 import supabase from "../supabase";
 import { Card, CardContent } from '../components/ui/card';
 
+// Lägg till Modal-komponent
+function Modal({ isOpen, onClose, children }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-zinc-800 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-bold text-white">Förhandsgranskning av tidrapport</h2>
+            <button
+              onClick={onClose}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="bg-white rounded-lg p-4">
+            <div dangerouslySetInnerHTML={{ __html: children }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SendHours() {
   const navigate = useNavigate();
   const [selectedDates, setSelectedDates] = useState([]);
@@ -17,6 +43,8 @@ export default function SendHours() {
   const [user, setUser] = useState(null);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [previewContent, setPreviewContent] = useState('');
 
   useEffect(() => {
     fetchReports();
@@ -251,6 +279,65 @@ export default function SendHours() {
     }
   };
 
+  const handlePreview = async () => {
+    if (selectedDates.length === 0) {
+      setError('Välj minst ett datum att förhandsgranska');
+      return;
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.email) throw new Error('Ingen inloggad användare');
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError) throw profileError;
+
+      const userName = profile?.full_name || user.email || 'Användare';
+
+      const { data: timeReports, error: reportsError } = await supabase
+        .from('time_reports')
+        .select('*')
+        .in('date', selectedDates)
+        .eq('user_id', user.id);
+
+      if (reportsError) throw reportsError;
+
+      const { data: projects, error: projectsError } = await supabase
+        .from('projects')
+        .select('*');
+
+      if (projectsError) throw projectsError;
+
+      const reportsWithProjects = timeReports.map(report => {
+        const project = projects.find(p => p.id === report.project);
+        return {
+          ...report,
+          project: project?.name || 'Okänt projekt',
+          material: report.materials || 'Inget material',
+          comment: report.comment || ''
+        };
+      });
+
+      const emailContent = generateEmailContent(
+        reportsWithProjects,
+        { ...user, full_name: userName },
+        selectedDates[0],
+        selectedDates[selectedDates.length - 1]
+      );
+
+      setPreviewContent(emailContent);
+      setIsPreviewOpen(true);
+    } catch (error) {
+      console.error("Fel vid förhandsgranskning:", error);
+      setError(error.message || "Kunde inte generera förhandsgranskning");
+    }
+  };
+
   const handlePrevMonth = () => {
     setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
@@ -450,29 +537,27 @@ export default function SendHours() {
           </div>
         )}
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <button
-            onClick={handleSend}
-            disabled={sending || selectedDates.length === 0}
-            className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:bg-blue-800"
+            onClick={handlePreview}
+            disabled={loading || sending || selectedDates.length === 0}
+            className="w-full sm:flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
           >
-            {sending ? (
-              <div className="flex items-center justify-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                <span>Skickar...</span>
-              </div>
-            ) : (
-              "Skicka tidrapporter"
-            )}
+            Förhandsgranska
           </button>
           <button
-            onClick={() => navigate("/")}
-            className="w-full sm:flex-1 bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-4 rounded-lg transition-colors active:bg-zinc-800"
+            onClick={handleSend}
+            disabled={loading || sending || selectedDates.length === 0}
+            className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
           >
-            Avbryt
+            {sending ? "Skickar..." : "Skicka Tidrapport"}
           </button>
         </div>
       </div>
+
+      <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)}>
+        {previewContent}
+      </Modal>
     </div>
   );
 } 

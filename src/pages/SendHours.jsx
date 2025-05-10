@@ -4,6 +4,7 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isTod
 import { sv } from "date-fns/locale";
 import supabase from "../supabase";
 import { Card, CardContent } from '../components/ui/card';
+import { Toast } from '../components/ui/toast';
 
 // Lägg till Modal-komponent
 function Modal({ isOpen, onClose, children }) {
@@ -45,6 +46,7 @@ export default function SendHours() {
   const [touchEnd, setTouchEnd] = useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     fetchReports();
@@ -188,7 +190,10 @@ export default function SendHours() {
 
   const handleSend = async () => {
     if (selectedDates.length === 0) {
-      setError('Välj minst ett datum att skicka');
+      setNotification({
+        message: 'Välj minst ett datum att skicka',
+        type: 'error'
+      });
       return;
     }
 
@@ -269,11 +274,22 @@ export default function SendHours() {
 
       if (updateError) throw updateError;
 
-      // Navigera tillbaka till startsidan
-      navigate('/');
+      setNotification({
+        message: 'Tidrapporten har skickats framgångsrikt!',
+        type: 'success'
+      });
+
+      // Navigera tillbaka till startsidan efter en kort fördröjning
+      setTimeout(() => {
+        navigate('/');
+      }, 2000);
+
     } catch (error) {
       console.error("Fel vid skickande:", error);
-      setError(error.message || "Kunde inte skicka tidrapporterna");
+      setNotification({
+        message: error.message || "Kunde inte skicka tidrapporterna",
+        type: 'error'
+      });
     } finally {
       setSending(false);
     }
@@ -281,7 +297,10 @@ export default function SendHours() {
 
   const handlePreview = async () => {
     if (selectedDates.length === 0) {
-      setError('Välj minst ett datum att förhandsgranska');
+      setNotification({
+        message: 'Välj minst ett datum att förhandsgranska',
+        type: 'warning'
+      });
       return;
     }
 
@@ -334,7 +353,10 @@ export default function SendHours() {
       setIsPreviewOpen(true);
     } catch (error) {
       console.error("Fel vid förhandsgranskning:", error);
-      setError(error.message || "Kunde inte generera förhandsgranskning");
+      setNotification({
+        message: error.message || "Kunde inte generera förhandsgranskning",
+        type: 'error'
+      });
     }
   };
 
@@ -554,6 +576,14 @@ export default function SendHours() {
           </button>
         </div>
       </div>
+
+      {notification && (
+        <Toast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
 
       <Modal isOpen={isPreviewOpen} onClose={() => setIsPreviewOpen(false)}>
         {previewContent}

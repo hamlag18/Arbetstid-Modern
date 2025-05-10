@@ -154,6 +154,96 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// Hantera meddelanden från klienten
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'SCHEDULE_REMINDER') {
+    const { reminderType, time, userId } = event.data;
+    
+    // Spara påminnelsen i IndexedDB
+    saveReminder(reminderType, time, userId)
+      .then(() => {
+        console.log('Påminnelse schemalagd:', reminderType, time);
+      })
+      .catch(error => {
+        console.error('Fel vid schemaläggning av påminnelse:', error);
+      });
+  }
+});
+
+// Funktion för att spara påminnelse i IndexedDB
+async function saveReminder(type, time, userId) {
+  const db = await openDatabase();
+  const tx = db.transaction('reminders', 'readwrite');
+  const store = tx.objectStore('reminders');
+  
+  await store.add({
+    type,
+    time,
+    userId,
+    createdAt: new Date().toISOString()
+  });
+}
+
+// Funktion för att öppna IndexedDB
+function openDatabase() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('ArbetstidDB', 1);
+    
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains('reminders')) {
+        db.createObjectStore('reminders', { keyPath: 'id', autoIncrement: true });
+      }
+    };
+  });
+}
+
+// Kontrollera påminnelser varje minut
+setInterval(async () => {
+  const now = new Date();
+  const db = await openDatabase();
+  const tx = db.transaction('reminders', 'readonly');
+  const store = tx.objectStore('reminders');
+  const reminders = await store.getAll();
+  
+  reminders.forEach(reminder => {
+    const reminderTime = new Date(reminder.time);
+    if (reminderTime <= now) {
+      // Skicka notifikation
+      self.registration.showNotification('Arbetstid', {
+        body: getReminderMessage(reminder.type),
+        icon: '/icons/icon-192x192.png',
+        badge: '/icons/icon-72x72.png',
+        vibrate: [100, 50, 100],
+        data: {
+          type: reminder.type,
+          userId: reminder.userId
+        }
+      });
+      
+      // Ta bort påminnelsen om den är engångs
+      if (reminder.type !== 'daily' && reminder.type !== 'weekly') {
+        store.delete(reminder.id);
+      }
+    }
+  });
+}, 60000);
+
+// Funktion för att hämta meddelande baserat på påminnelsetyp
+function getReminderMessage(type) {
+  switch (type) {
+    case 'daily':
+      return 'Glöm inte att registrera dina arbetstimmar idag!';
+    case 'weekly':
+      return 'Det är dags att skicka in din tidrapport för veckan!';
+    default:
+      return 'Påminnelse från Arbetstid';
+  }
+}
+
 // Hantera push-notifikationer
 self.addEventListener('push', (event) => {
   console.log('Push-notifikation mottagen');

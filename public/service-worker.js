@@ -217,8 +217,8 @@ setInterval(async () => {
   const tx = db.transaction('reminders', 'readonly');
   const store = tx.objectStore('reminders');
   const reminders = await store.getAll();
-  
-  reminders.forEach(reminder => {
+  console.log('Reminders från IndexedDB:', reminders);
+  (Array.isArray(reminders) ? reminders : []).forEach(reminder => {
     const reminderTime = new Date(reminder.time);
     if (reminderTime <= now) {
       // Skicka notifikation

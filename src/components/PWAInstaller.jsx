@@ -5,8 +5,14 @@ export function PWAInstaller() {
   const [showInstallButton, setShowInstallButton] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState('default');
   const [isMobile, setIsMobile] = useState(false);
+  const [closed, setClosed] = useState(false);
 
   useEffect(() => {
+    // Kontrollera om användaren redan stängt rutan
+    if (localStorage.getItem('pwaInstallerClosed') === 'true') {
+      setClosed(true);
+      return;
+    }
     // Kontrollera om det är en mobil enhet
     setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 
@@ -68,13 +74,25 @@ export function PWAInstaller() {
     }
   };
 
-  // Visa alltid på mobila enheter
-  if (!isMobile && !showInstallButton && notificationPermission === 'granted') {
+  const handleClose = () => {
+    setClosed(true);
+    localStorage.setItem('pwaInstallerClosed', 'true');
+  };
+
+  // Visa inte om användaren stängt rutan
+  if (closed || (!isMobile && !showInstallButton && notificationPermission === 'granted')) {
     return null;
   }
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:bottom-4 sm:w-80 bg-zinc-800 rounded-lg shadow-lg border border-zinc-700 p-4 z-50">
+      <button
+        onClick={handleClose}
+        className="absolute top-2 right-2 text-zinc-400 hover:text-white text-xl font-bold focus:outline-none"
+        aria-label="Stäng"
+      >
+        ×
+      </button>
       {showInstallButton && (
         <div className="mb-4">
           <h3 className="text-lg font-medium text-white mb-2">Installera Arbetstid</h3>

@@ -77,7 +77,7 @@ function App() {
                 }
               />
               <Route
-                path="/inställningar"
+                path="/settings"
                 element={
                   <ProtectedRoute>
                     <Settings />

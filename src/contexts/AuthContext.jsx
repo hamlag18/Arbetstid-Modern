@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import supabase from '../supabase';
+import { supabase } from '../supabase';
 
 const AuthContext = createContext();
 
@@ -15,11 +15,12 @@ export function AuthProvider({ children }) {
     // Kontrollera om användaren är inloggad när komponenten laddas
     const checkUser = async () => {
       try {
-        const { data: { user }, error } = await supabase.auth.getUser();
+        const { data: { session }, error } = await supabase.auth.getSession();
         if (error) throw error;
-        setUser(user);
+        setUser(session?.user || null);
       } catch (error) {
         console.error('Error checking user:', error.message);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -28,7 +29,7 @@ export function AuthProvider({ children }) {
     checkUser();
 
     // Prenumerera på auth-ändringar
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setUser(session?.user || null);
         setLoading(false);
@@ -36,7 +37,7 @@ export function AuthProvider({ children }) {
     );
 
     return () => {
-      authListener?.unsubscribe();
+      subscription?.unsubscribe();
     };
   }, []);
 

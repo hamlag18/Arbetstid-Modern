@@ -1,14 +1,41 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BellIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { BellIcon, Cog6ToothIcon, ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabase';
 
 export default function Navbar() {
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
+    // Kontrollera om användaren är admin
+    const checkAdminStatus = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      console.log("Inloggad användare:", user?.email);
+      
+      if (user) {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        console.log("Profil data:", profile);
+        console.log("Profil error:", error);
+        
+        if (error) {
+          console.error("Fel vid hämtning av profil:", error);
+        }
+        
+        setIsAdmin(profile?.role === 'admin');
+        console.log("Är admin:", profile?.role === 'admin');
+      }
+    };
+
+    checkAdminStatus();
+
     // Ladda sparade notifikationer från localStorage
     const savedNotifications = localStorage.getItem('notifications');
     if (savedNotifications) {
@@ -84,6 +111,17 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-4">
+            {isAdmin && (
+              <Link
+                to="/projects"
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+                title="Hantera projekt"
+              >
+                <ClipboardDocumentListIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Projekt</span>
+              </Link>
+            )}
+
             <div className="relative">
               <button
                 onClick={() => setShowNotifications(!showNotifications)}

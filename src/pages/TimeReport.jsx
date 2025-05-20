@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
-import supabase from "../supabase";
+import { supabase } from "../supabase";
 
 export default function TimeReport() {
   const navigate = useNavigate();
@@ -38,7 +38,8 @@ export default function TimeReport() {
         const { data, error } = await supabase
           .from('projects')
           .select('id, name')
-          .order('name');
+          .eq('status', 'active')
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error("Fel vid hämtning av projekt:", error);

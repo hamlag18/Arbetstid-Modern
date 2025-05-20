@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
-import supabase from "../supabase";
+import { supabase } from "../supabase";
 import { Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, FormControl, InputLabel, Select, MenuItem, IconButton, Typography, Box, Paper } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, AccessTime as AccessTimeIcon } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';

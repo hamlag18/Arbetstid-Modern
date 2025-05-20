@@ -2,27 +2,9 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { sv } from "date-fns/locale";
-import supabase from "../supabase";
+import { supabase } from "../supabase";
 import { ChevronLeftIcon, ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
-
-function Card({ children, className = "", ...props }) {
-  return (
-    <div
-      className={`bg-zinc-800 rounded-xl shadow-md ${className}`}
-      {...props}
-    >
-      {children}
-    </div>
-  );
-}
-
-function CardContent({ children, className = "", ...props }) {
-  return (
-    <div className={`p-4 ${className}`} {...props}>
-      {children}
-    </div>
-  );
-}
+import { Card, CardContent } from "../components/ui/card";
 
 function Modal({ isOpen, onClose, children }) {
   if (!isOpen) return null;
@@ -52,8 +34,7 @@ const getDayStatus = (date, reportedDates, sentDates) => {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [reportedDates, setReportedDates] = useState([]);
-  const [sentDates, setSentDates] = useState([]);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -71,59 +52,26 @@ export default function HomePage() {
 
   const fetchReports = async () => {
     try {
-      setLoading(true);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError) {
-        console.error("Fel vid hämtning av användare:", userError);
+      if (sessionError) {
+        console.error("Fel vid hämtning av session:", sessionError);
         setError("Kunde inte hämta användarinformation");
         setLoading(false);
         return;
       }
 
-      // Kontrollera om användaren är admin
-      const isAdminByEmail = user.email === 'tidrapport1157@gmail.com';
-      setIsAdmin(isAdminByEmail);
-      setSelectedUserId(user.id);
-
-      // Om admin, hämta alla användare
-      if (isAdminByEmail) {
-        const { data: usersData, error: usersError } = await supabase
-          .from('profiles')
-          .select('id, email, full_name')
-          .order('full_name');
-
-        if (usersError) {
-          console.error("Fel vid hämtning av användare:", usersError);
-        } else {
-          setUsers(usersData || []);
-        }
-      }
-
-      // Hämta alla projekt först
-      const { data: projectsData, error: projectsError } = await supabase
-        .from('projects')
-        .select('*');
-
-      if (projectsError) {
-        console.error("Fel vid hämtning av projekt:", projectsError);
-        setError("Kunde inte hämta projekt");
+      if (!session) {
+        setError("Du måste vara inloggad för att se tidrapporter");
         setLoading(false);
         return;
       }
 
-      const projectsMap = {};
-      projectsData.forEach(project => {
-        projectsMap[project.id] = project;
-      });
-      setProjects(projectsMap);
-
-      // Hämta tidrapporter baserat på vald användare
       const { data: reports, error: reportsError } = await supabase
         .from('time_reports')
         .select('*')
-        .eq('user_id', selectedUserId || user.id);
+        .eq('user_id', session.user.id)
+        .order('date', { ascending: false });
 
       if (reportsError) {
         console.error("Fel vid hämtning av tidrapporter:", reportsError);
@@ -132,11 +80,7 @@ export default function HomePage() {
         return;
       }
 
-      const reported = reports.filter(report => !report.sent).map(report => report.date);
-      const sent = reports.filter(report => report.sent).map(report => report.date);
-
-      setReportedDates(reported);
-      setSentDates(sent);
+      setReports(reports || []);
       setLoading(false);
     } catch (error) {
       console.error("Ett fel uppstod:", error);
@@ -151,22 +95,23 @@ export default function HomePage() {
 
   const handleDateClick = async (date) => {
     const dateStr = format(date, "yyyy-MM-dd");
+    setSelectedDate(dateStr);
+    setIsModalOpen(true);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: reports, error } = await supabase
         .from('time_reports')
         .select('*')
-        .eq('user_id', selectedUserId || user.id)
+        .eq('user_id', user.id)
         .eq('date', dateStr);
 
       if (error) throw error;
 
-      setSelectedDateReports(reports);
-      setSelectedDate(dateStr);
-      setIsModalOpen(true);
+      setSelectedDateReports(reports || []);
     } catch (error) {
       console.error("Fel vid hämtning av tidrapporter:", error);
+      setError("Kunde inte hämta tidrapporter för detta datum");
     }
   };
 
@@ -286,8 +231,7 @@ export default function HomePage() {
 
       // Uppdatera state först efter att vi har data
       setSelectedUserId(userId);
-      setReportedDates(reports.filter(report => !report.sent).map(report => report.date));
-      setSentDates(reports.filter(report => report.sent).map(report => report.date));
+      setReports(reports);
       
       // Uppdatera användarens information från profiles-tabellen
       const { data: userData, error: userError } = await supabase
@@ -401,7 +345,7 @@ export default function HomePage() {
                 return null;
               })}
               {daysInMonth.map((date, i) => {
-                const statusClass = getDayStatus(date, reportedDates, sentDates);
+                const statusClass = getDayStatus(date, reports.filter(report => !report.sent).map(report => report.date), reports.filter(report => report.sent).map(report => report.date));
                 const isCurrentMonth = isSameMonth(date, currentDate);
                 const isCurrentDay = isToday(date);
                 

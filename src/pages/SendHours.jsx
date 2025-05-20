@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays, getWeek } from "date-fns";
 import { sv } from "date-fns/locale";
-import supabase from "../supabase";
+import { supabase } from "../supabase";
 import { Card, CardContent } from '../components/ui/card';
 import { Toast } from '../components/ui/toast';
 

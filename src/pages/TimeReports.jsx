@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
-import supabase from "../supabase";
+import { supabase } from "../supabase";
 
 export default function TimeReports() {
   const navigate = useNavigate();

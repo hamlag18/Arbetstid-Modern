@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
-import supabase from "../supabase";
+import { supabase } from "../supabase";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -25,25 +25,21 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
+    setError(null);
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
       });
 
-      if (error) {
-        setError("Fel vid inloggning: " + error.message);
-        return;
-      }
+      if (error) throw error;
 
-      console.log("Inloggad:", data);
       navigate("/");
     } catch (error) {
-      setError("Ett fel uppstod vid inloggning");
-      console.error("Inloggningsfel:", error);
+      console.error("Fel vid inloggning:", error.message);
+      setError("Fel vid inloggning. Kontrollera dina uppgifter och försök igen.");
     } finally {
       setLoading(false);
     }

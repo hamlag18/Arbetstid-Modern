@@ -52,36 +52,66 @@ export default function HomePage() {
 
   const fetchReports = async () => {
     try {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError) {
-        console.error("Fel vid hämtning av session:", sessionError);
-        setError("Kunde inte hämta användarinformation");
-        setLoading(false);
-        return;
-      }
+      const fetchData = async () => {
+        try {
+          // Hämta alla projekt först
+          const { data: projectsData, error: projectsError } = await supabase
+            .from('projects')
+            .select('id, name');
 
-      if (!session) {
-        setError("Du måste vara inloggad för att se tidrapporter");
-        setLoading(false);
-        return;
-      }
+          if (projectsError) {
+            console.error("Fel vid hämtning av projekt:", projectsError);
+            setError("Kunde inte hämta projektinformation");
+            setLoading(false);
+            return;
+          }
 
-      const { data: reports, error: reportsError } = await supabase
-        .from('time_reports')
-        .select('*')
-        .eq('user_id', session.user.id)
-        .order('date', { ascending: false });
+          // Skapa en map av projekt för snabb lookup
+          const projectsMap = {};
+          projectsData.forEach(project => {
+            projectsMap[project.id] = project;
+          });
+          setProjects(projectsMap);
 
-      if (reportsError) {
-        console.error("Fel vid hämtning av tidrapporter:", reportsError);
-        setError("Kunde inte hämta tidrapporter");
-        setLoading(false);
-        return;
-      }
+          // Hämta tidrapporter
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError) {
+            console.error("Fel vid hämtning av session:", sessionError);
+            setError("Kunde inte hämta användarinformation");
+            setLoading(false);
+            return;
+          }
 
-      setReports(reports || []);
-      setLoading(false);
+          if (!session) {
+            setError("Du måste vara inloggad för att se tidrapporter");
+            setLoading(false);
+            return;
+          }
+
+          const { data: reports, error: reportsError } = await supabase
+            .from('time_reports')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .order('date', { ascending: false });
+
+          if (reportsError) {
+            console.error("Fel vid hämtning av tidrapporter:", reportsError);
+            setError("Kunde inte hämta tidrapporter");
+            setLoading(false);
+            return;
+          }
+
+          setReports(reports || []);
+          setLoading(false);
+        } catch (error) {
+          console.error("Ett fel uppstod:", error);
+          setError("Ett oväntat fel uppstod");
+          setLoading(false);
+        }
+      };
+
+      await fetchData();
     } catch (error) {
       console.error("Ett fel uppstod:", error);
       setError("Ett oväntat fel uppstod");
@@ -435,111 +465,104 @@ export default function HomePage() {
         </div>
 
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-          <div className="flex flex-col">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold">
-                {selectedDate ? format(new Date(selectedDate), "d MMMM yyyy", { locale: sv }) : ""}
-              </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold">
+              {selectedDate && format(new Date(selectedDate), "d MMMM yyyy", { locale: sv })}
+            </h2>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="text-zinc-400 hover:text-white transition-colors"
+            >
+              ✕
+            </button>
+          </div>
+
+          {selectedDateReports.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-zinc-400">Inga tidrapporter för detta datum</p>
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="text-zinc-400 hover:text-white p-2 -mr-2"
+                onClick={() => {
+                  setIsModalOpen(false);
+                  navigate(`/tidrapport?datum=${selectedDate}`);
+                }}
+                className="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
               >
-                ✕
+                Lägg till tid
               </button>
             </div>
-
-            {selectedDateReports.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-zinc-400 mb-4">Inga tidrapporter för detta datum</p>
-                <button
-                  onClick={() => navigate(`/tidrapport?datum=${selectedDate}`)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors w-full sm:w-auto"
-                >
-                  Lägg till tid
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {selectedDateReports.map(report => (
-                  <div key={report.id} className="bg-zinc-700/50 p-4 rounded-lg">
-                    {editingReport?.id === report.id ? (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm mb-1">Timmar</label>
-                          <input
-                            type="number"
-                            value={editingReport.hours}
-                            onChange={(e) => setEditingReport(prev => ({ ...prev, hours: e.target.value }))}
-                            className="w-full px-3 py-2 bg-zinc-600 rounded-lg text-base"
-                            step="0.5"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm mb-1">Material</label>
-                          <textarea
-                            value={editingReport.materials || ""}
-                            onChange={(e) => setEditingReport(prev => ({ ...prev, materials: e.target.value }))}
-                            className="w-full px-3 py-2 bg-zinc-600 rounded-lg text-base"
-                            rows="2"
-                          />
-                        </div>
-                        <div className="flex gap-2 pt-2">
-                          <button
-                            onClick={() => handleEdit(report)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                          >
-                            Spara
-                          </button>
-                          <button
-                            onClick={() => setEditingReport(null)}
-                            className="flex-1 bg-zinc-600 hover:bg-zinc-500 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                          >
-                            Avbryt
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h3 className="font-medium">{projects[report.project]?.name || "Okänt projekt"}</h3>
-                            <p className="text-sm text-zinc-400">{projects[report.project]?.address}</p>
-                          </div>
-                          <p className="text-lg font-medium">{report.hours}h</p>
-                        </div>
-                        {report.materials && (
-                          <p className="text-sm text-zinc-300 mt-2">Material: {report.materials}</p>
-                        )}
-                        <div className="flex gap-2 mt-3">
-                          <button
-                            onClick={() => handleEdit(report)}
-                            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                          >
-                            Redigera
-                          </button>
-                          <button
-                            onClick={() => handleDelete(report.id)}
-                            className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm"
-                          >
-                            Radera
-                          </button>
-                        </div>
-                      </>
-                    )}
+          ) : (
+            <div className="space-y-4">
+              {selectedDateReports.map((report) => (
+                <div key={report.id} className="bg-zinc-700 rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-2">
+                    <div>
+                      <h3 className="font-medium">
+                        {projects[report.project]?.name || "Okänt projekt"}
+                      </h3>
+                      <p className="text-sm text-zinc-400">{report.hours} timmar</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(report)}
+                        className="text-zinc-400 hover:text-white transition-colors"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={() => handleDelete(report.id)}
+                        className="text-zinc-400 hover:text-red-500 transition-colors"
+                      >
+                        <TrashIcon className="h-5 w-5" />
+                      </button>
+                    </div>
                   </div>
-                ))}
-                
-                <div className="pt-4">
-                  <button
-                    onClick={() => navigate(`/tidrapport?datum=${selectedDate}`)}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors"
-                  >
-                    Lägg till tid
-                  </button>
+                  {editingReport?.id === report.id ? (
+                    <div className="mt-2 space-y-2">
+                      <input
+                        type="number"
+                        value={editingReport.hours}
+                        onChange={(e) => setEditingReport(prev => ({ ...prev, hours: e.target.value }))}
+                        className="w-full px-3 py-2 rounded bg-zinc-800 text-white"
+                        step="0.5"
+                        min="0"
+                      />
+                      <textarea
+                        value={editingReport.materials}
+                        onChange={(e) => setEditingReport(prev => ({ ...prev, materials: e.target.value }))}
+                        className="w-full px-3 py-2 rounded bg-zinc-800 text-white"
+                        rows="3"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setEditingReport(null)}
+                          className="px-3 py-1 rounded bg-zinc-600 hover:bg-zinc-500 transition-colors"
+                        >
+                          Avbryt
+                        </button>
+                        <button
+                          onClick={() => handleEdit(report)}
+                          className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 transition-colors"
+                        >
+                          Spara
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-300">{report.materials || "Inget material angivet"}</p>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
+              ))}
+              <button
+                onClick={() => {
+                  setIsModalOpen(false);
+                  navigate(`/tidrapport?datum=${selectedDate}`);
+                }}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+              >
+                Lägg till tid
+              </button>
+            </div>
+          )}
         </Modal>
       </div>
     </div>

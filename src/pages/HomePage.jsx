@@ -50,6 +50,8 @@ export default function HomePage() {
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
+  const hasUnsentReports = reports.some(report => !report.sent);
+
   const fetchReports = async () => {
     try {
       const fetchData = async () => {
@@ -283,6 +285,27 @@ export default function HomePage() {
     }
   };
 
+  const handleSendHours = async () => {
+    try {
+      const unsentReports = reports.filter(report => !report.sent);
+      
+      for (const report of unsentReports) {
+        const { error } = await supabase
+          .from('time_reports')
+          .update({ sent: true })
+          .eq('id', report.id);
+
+        if (error) throw error;
+      }
+
+      // Uppdatera listan efter att timmarna har skickats
+      await fetchReports();
+    } catch (error) {
+      console.error("Fel vid skickande av timmar:", error);
+      setError("Kunde inte skicka timmar");
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
@@ -313,26 +336,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
       <div className="max-w-screen-sm mx-auto px-4 py-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Tidrapporter</h1>
-          <div className="flex gap-3 w-full sm:w-auto">
-            <button
-              onClick={() => navigate("/tidrapport")}
-              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors text-base sm:text-lg"
-            >
-              Ny tidrapport
-            </button>
-            <button
-              onClick={() => navigate("/tidrapporter")}
-              className="w-full sm:w-auto bg-zinc-700 hover:bg-zinc-600 text-white font-medium py-3 px-6 rounded-lg transition-colors text-base sm:text-lg"
-            >
-              Visa tidrapporter
-            </button>
-          </div>
-        </div>
-
         <div className="bg-zinc-800 rounded-lg p-4 sm:p-6 mb-6">
-          <h2 className="text-xl sm:text-2xl font-semibold mb-4">Kalender</h2>
           <div className="calendar-container">
             <div className="flex justify-between items-center mb-4">
               <button
@@ -351,11 +355,11 @@ export default function HomePage() {
                 <ChevronRightIcon className="h-6 w-6" />
               </button>
             </div>
-            <div className="grid grid-cols-7 gap-1 sm:gap-2">
+            <div className="grid grid-cols-7 gap-1 bg-zinc-700 rounded-lg overflow-hidden">
               {["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"].map((day) => (
                 <div
                   key={day}
-                  className="text-center text-sm sm:text-base font-medium py-2"
+                  className="text-center text-sm sm:text-base font-medium py-2 bg-zinc-800"
                 >
                   {day}
                 </div>
@@ -368,7 +372,7 @@ export default function HomePage() {
                   return (
                     <div
                       key={`empty-${i}`}
-                      className="h-12 sm:h-16"
+                      className="h-20 sm:h-24 bg-zinc-800"
                     />
                   );
                 }
@@ -387,26 +391,36 @@ export default function HomePage() {
                 return (
                   <div
                     key={i}
-                    className={`relative h-12 sm:h-16 flex flex-col items-center justify-center rounded-lg cursor-pointer transition-colors ${
-                      isCurrentDay
-                        ? "bg-blue-600 hover:bg-blue-700"
+                    className={`relative min-h-[5rem] sm:min-h-[6rem] flex flex-col ${
+                      isCurrentDay 
+                        ? "bg-blue-600 hover:bg-blue-700" 
                         : statusClass
-                    }`}
+                    } transition-colors`}
                     onClick={() => handleDateClick(date)}
                   >
-                    <span className="text-sm sm:text-base">{format(date, "d")}</span>
-                    {dayReports.length > 0 && (
-                      <div className="text-[10px] sm:text-xs text-center px-1 truncate w-full">
-                        {dayReports.map((report, index) => (
-                          <div key={report.id} className="truncate">
-                            {projects[report.project]?.name || "Okänt projekt"} {report.hours}h
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {isCurrentDay && (
-                      <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full" />
-                    )}
+                    <div className="p-1 text-right">
+                      <span className={`inline-block w-6 h-6 flex items-center justify-center rounded-full ${
+                        isCurrentDay ? "bg-white text-blue-600" : "text-white"
+                      }`}>
+                        {format(date, "d")}
+                      </span>
+                    </div>
+                    <div className="flex-1 p-1 overflow-y-auto">
+                      {dayReports.length > 0 ? (
+                        <div className="space-y-1">
+                          {dayReports.map((report) => (
+                            <div
+                              key={report.id}
+                              className="text-xs sm:text-sm p-1 rounded bg-white/10 text-white truncate"
+                            >
+                              {projects[report.project]?.name || "Okänt projekt"} {report.hours}h
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="h-full" />
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -414,46 +428,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-md mb-6">
-          {isAdmin && (
-            <Card
-              className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-              onClick={() => navigate("/projects")}
-            >
-              <CardContent className="p-4 sm:p-6 text-center">
-                <span className="text-lg sm:text-xl">⚙️ Projekthantering</span>
-              </CardContent>
-            </Card>
-          )}
-
-          <Card
-            className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-            onClick={() => navigate("/nytt-projekt")}
-          >
-            <CardContent className="p-4 sm:p-6 text-center">
-              <span className="text-lg sm:text-xl">➕ Nytt projekt</span>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation"
-            onClick={() => navigate("/skicka-timmar")}
-          >
-            <CardContent className="p-4 sm:p-6 text-center">
-              <span className="text-lg sm:text-xl">📤 Skicka Timmar</span>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="cursor-pointer hover:shadow-xl transition-all active:scale-95 touch-manipulation sm:col-span-2"
-            onClick={() => navigate("/tidrapporter")}
-          >
-            <CardContent className="p-4 sm:p-6 text-center">
-              <span className="text-lg sm:text-xl">📋 Visa tidrapporter</span>
-            </CardContent>
-          </Card>
-        </div>
-        
         <div className="w-full max-w-md">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
             {isAdmin && (
@@ -469,12 +443,6 @@ export default function HomePage() {
                 ))}
               </select>
             )}
-            <button
-              onClick={handleLogout}
-              className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Logga ut
-            </button>
           </div>
         </div>
 

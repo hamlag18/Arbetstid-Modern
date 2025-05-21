@@ -253,7 +253,7 @@ export default function HomePage() {
       // Hämta användarens tidrapporter
       const { data: reports, error: reportsError } = await supabase
         .from('time_reports')
-        .select('*')
+        .select('*, projects(name)')
         .eq('user_id', userId)
         .order('date', { ascending: false });
 
@@ -399,7 +399,7 @@ export default function HomePage() {
                       <div className="text-[10px] sm:text-xs text-center px-1 truncate w-full">
                         {dayReports.map((report, index) => (
                           <div key={report.id} className="truncate">
-                            {report.projects?.name || "Okänt projekt"} {report.hours}h
+                            {projects[report.project]?.name || "Okänt projekt"} {report.hours}h
                           </div>
                         ))}
                       </div>
@@ -511,7 +511,7 @@ export default function HomePage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-medium">
-                        {report.projects?.name || "Okänt projekt"}
+                        {projects[report.project]?.name || "Okänt projekt"}
                       </h3>
                       <p className="text-sm text-zinc-400">{report.hours} timmar</p>
                     </div>

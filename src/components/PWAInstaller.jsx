@@ -3,16 +3,17 @@ import React, { useState, useEffect } from 'react';
 export function PWAInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstallButton, setShowInstallButton] = useState(false);
-  const [notificationPermission, setNotificationPermission] = useState('default');
   const [isMobile, setIsMobile] = useState(false);
   const [closed, setClosed] = useState(false);
 
   useEffect(() => {
     // Kontrollera om användaren redan stängt rutan
-    if (localStorage.getItem('pwaInstallerClosed') === 'true') {
+    const installerClosed = localStorage.getItem('pwaInstallerClosed');
+    if (installerClosed === 'true') {
       setClosed(true);
       return;
     }
+
     // Kontrollera om det är en mobil enhet
     setIsMobile(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent));
 
@@ -35,11 +36,6 @@ export function PWAInstaller() {
       setDeferredPrompt(e);
       setShowInstallButton(true);
     });
-
-    // Kontrollera notifikationstillstånd
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission);
-    }
   }, []);
 
   const handleInstallClick = async () => {
@@ -54,24 +50,11 @@ export function PWAInstaller() {
     
     if (outcome === 'accepted') {
       console.log('Användaren installerade appen');
+      handleClose(); // Stäng popupen när appen är installerad
     }
     
     setDeferredPrompt(null);
     setShowInstallButton(false);
-  };
-
-  const requestNotificationPermission = async () => {
-    if (!('Notification' in window)) {
-      alert('Din webbläsare stöder inte notifikationer');
-      return;
-    }
-
-    try {
-      const permission = await Notification.requestPermission();
-      setNotificationPermission(permission);
-    } catch (error) {
-      console.error('Fel vid begäran av notifikationstillstånd:', error);
-    }
   };
 
   const handleClose = () => {
@@ -79,8 +62,8 @@ export function PWAInstaller() {
     localStorage.setItem('pwaInstallerClosed', 'true');
   };
 
-  // Visa inte om användaren stängt rutan
-  if (closed || (!isMobile && !showInstallButton && notificationPermission === 'granted')) {
+  // Visa inte om användaren stängt rutan eller om appen är installerad
+  if (closed || (!isMobile && !showInstallButton)) {
     return null;
   }
 
@@ -97,7 +80,7 @@ export function PWAInstaller() {
         <div className="mb-4">
           <h3 className="text-lg font-medium text-white mb-2">Installera Arbetstid</h3>
           <p className="text-sm text-zinc-300 mb-3">
-            Installera appen för att få push-notifikationer och använda den offline.
+            Installera appen för att använda den offline.
           </p>
           <button
             onClick={handleInstallClick}
@@ -119,21 +102,6 @@ export function PWAInstaller() {
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors"
           >
             Öppna i app
-          </button>
-        </div>
-      )}
-
-      {notificationPermission !== 'granted' && (
-        <div>
-          <h3 className="text-lg font-medium text-white mb-2">Aktivera notifikationer</h3>
-          <p className="text-sm text-zinc-300 mb-3">
-            Få påminnelser om att registrera timmar och skicka tidrapporter.
-          </p>
-          <button
-            onClick={requestNotificationPermission}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors"
-          >
-            Aktivera notifikationer
           </button>
         </div>
       )}

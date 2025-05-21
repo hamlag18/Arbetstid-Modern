@@ -91,7 +91,7 @@ export default function HomePage() {
 
           const { data: reports, error: reportsError } = await supabase
             .from('time_reports')
-            .select('*')
+            .select('*, projects(name)')
             .eq('user_id', session.user.id)
             .order('date', { ascending: false });
 
@@ -379,10 +379,15 @@ export default function HomePage() {
                 const isCurrentMonth = isSameMonth(date, currentDate);
                 const isCurrentDay = isToday(date);
                 
+                // Hämta tidrapporter för detta datum
+                const dateStr = format(date, "yyyy-MM-dd");
+                const dayReports = reports.filter(report => report.date === dateStr);
+                const totalHours = dayReports.reduce((sum, report) => sum + report.hours, 0);
+                
                 return (
                   <div
                     key={i}
-                    className={`relative h-12 sm:h-16 flex items-center justify-center rounded-lg cursor-pointer transition-colors ${
+                    className={`relative h-12 sm:h-16 flex flex-col items-center justify-center rounded-lg cursor-pointer transition-colors ${
                       isCurrentDay
                         ? "bg-blue-600 hover:bg-blue-700"
                         : statusClass
@@ -390,6 +395,15 @@ export default function HomePage() {
                     onClick={() => handleDateClick(date)}
                   >
                     <span className="text-sm sm:text-base">{format(date, "d")}</span>
+                    {dayReports.length > 0 && (
+                      <div className="text-[10px] sm:text-xs text-center px-1 truncate w-full">
+                        {dayReports.map((report, index) => (
+                          <div key={report.id} className="truncate">
+                            {report.projects?.name || "Okänt projekt"} {report.hours}h
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {isCurrentDay && (
                       <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1.5 h-1.5 sm:w-2 sm:h-2 bg-blue-400 rounded-full" />
                     )}
@@ -497,7 +511,7 @@ export default function HomePage() {
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <h3 className="font-medium">
-                        {projects[report.project]?.name || "Okänt projekt"}
+                        {report.projects?.name || "Okänt projekt"}
                       </h3>
                       <p className="text-sm text-zinc-400">{report.hours} timmar</p>
                     </div>

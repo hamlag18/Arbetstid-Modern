@@ -132,7 +132,7 @@ export default function HomePage() {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: reports, error } = await supabase
         .from('time_reports')
-        .select('*')
+        .select('*, projects(name)')
         .eq('user_id', user.id)
         .eq('date', dateStr);
 

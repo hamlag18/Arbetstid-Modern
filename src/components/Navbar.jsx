@@ -56,14 +56,46 @@ export default function Navbar() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: unsentReports } = await supabase
+      // Hämta alla oskickade tidrapporter med projektinformation
+      const { data: unsentReports, error: reportsError } = await supabase
         .from('time_reports')
-        .select('id')
+        .select(`
+          id,
+          date,
+          hours,
+          materials,
+          projects (
+            name
+          )
+        `)
         .eq('user_id', user.id)
         .eq('sent', false);
 
-      if (!unsentReports) return;
+      if (reportsError) throw reportsError;
+      if (!unsentReports || unsentReports.length === 0) return;
 
+      // Skapa e-postinnehåll
+      const emailContent = unsentReports.map(report => {
+        const date = new Date(report.date).toLocaleDateString('sv-SE');
+        return `
+          Datum: ${date}
+          Projekt: ${report.projects?.name || 'Okänt projekt'}
+          Timmar: ${report.hours}
+          Material: ${report.materials || 'Inget material angivet'}
+        `;
+      }).join('\n\n');
+
+      // Skicka e-post via Edge Function
+      const { error: emailError } = await supabase.functions.invoke('send-time-report', {
+        body: {
+          email: user.email,
+          content: emailContent
+        }
+      });
+
+      if (emailError) throw emailError;
+
+      // Markera tidrapporterna som skickade
       for (const report of unsentReports) {
         const { error } = await supabase
           .from('time_reports')

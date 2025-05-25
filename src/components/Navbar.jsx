@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cog6ToothIcon, ClipboardDocumentListIcon, PlusIcon, DocumentTextIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, ClipboardDocumentListIcon, PlusIcon, DocumentTextIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon, Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabase';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,6 +23,7 @@ export default function Navbar() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [notification, setNotification] = useState(null);
   const [hasUnsentReports, setHasUnsentReports] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     // Kontrollera om användaren är admin
@@ -94,7 +95,8 @@ export default function Navbar() {
               </Link>
             </div>
 
-            <div className="flex items-center gap-4">
+            {/* Desktop links */}
+            <div className="hidden sm:flex items-center gap-4">
               <Link
                 to="/nytt-projekt"
                 className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
@@ -150,8 +152,81 @@ export default function Navbar() {
                 Logga ut
               </button>
             </div>
+
+            {/* Mobil: Skicka timmar alltid synlig */}
+            <div className="flex sm:hidden items-center gap-2">
+              <button
+                onClick={handleSendHours}
+                disabled={!hasUnsentReports}
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Skicka timmar"
+              >
+                <PaperAirplaneIcon className="h-6 w-6" />
+              </button>
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="p-2 text-zinc-400 hover:text-white focus:outline-none"
+                title="Meny"
+              >
+                {mobileMenuOpen ? (
+                  <XMarkIcon className="h-7 w-7" />
+                ) : (
+                  <Bars3Icon className="h-7 w-7" />
+                )}
+              </button>
+            </div>
           </div>
         </div>
+        {/* Mobilmeny */}
+        {mobileMenuOpen && (
+          <div className="sm:hidden bg-zinc-800 border-t border-zinc-700 px-4 pb-4 pt-2 flex flex-col gap-2">
+            <Link
+              to="/nytt-projekt"
+              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+              title="Nytt projekt"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <PlusIcon className="h-6 w-6" />
+              <span className="text-sm font-medium">Nytt projekt</span>
+            </Link>
+            <Link
+              to="/tidrapporter"
+              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+              title="Visa tidrapporter"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <DocumentTextIcon className="h-6 w-6" />
+              <span className="text-sm font-medium">Tidrapporter</span>
+            </Link>
+            {isAdmin && (
+              <Link
+                to="/projects"
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+                title="Hantera projekt"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <ClipboardDocumentListIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Projekt</span>
+              </Link>
+            )}
+            <Link
+              to="/settings"
+              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+              title="Inställningar"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              <Cog6ToothIcon className="h-6 w-6" />
+              <span className="text-sm font-medium">Inställningar</span>
+            </Link>
+            <button
+              onClick={() => { setMobileMenuOpen(false); handleSignOut(); }}
+              className="text-zinc-400 hover:text-white transition-colors flex items-center gap-2 p-2"
+            >
+              <ArrowRightOnRectangleIcon className="h-6 w-6" />
+              <span className="text-sm font-medium">Logga ut</span>
+            </button>
+          </div>
+        )}
       </nav>
       {notification && (
         <Notification

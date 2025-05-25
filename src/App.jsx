@@ -53,23 +53,7 @@ function App() {
                 }
               />
               <Route
-                path="/tidrapport"
-                element={
-                  <ProtectedRoute>
-                    <TimeReport />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/tidrapporter"
-                element={
-                  <ProtectedRoute>
-                    <TimeReports />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/skicka-timmar"
+                path="/send-hours"
                 element={
                   <ProtectedRoute>
                     <SendHours />
@@ -81,6 +65,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Settings />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tidrapporter"
+                element={
+                  <ProtectedRoute>
+                    <TimeReports />
                   </ProtectedRoute>
                 }
               />
@@ -97,6 +89,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ProjectManagement />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/tidrapport"
+                element={
+                  <ProtectedRoute>
+                    <TimeReport />
                   </ProtectedRoute>
                 }
               />

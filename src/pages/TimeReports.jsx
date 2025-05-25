@@ -2,6 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { supabase } from "../supabase";
+import { PaperAirplaneIcon } from '@heroicons/react/24/outline';
+
+function Notification({ message, type, onClose }) {
+  return (
+    <div className={`fixed top-20 right-4 p-4 rounded-lg shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    } text-white`}>
+      <div className="flex items-center gap-2">
+        <span>{message}</span>
+        <button onClick={onClose} className="ml-2 hover:text-white/80">✕</button>
+      </div>
+    </div>
+  );
+}
 
 export default function TimeReports() {
   const navigate = useNavigate();
@@ -10,6 +24,8 @@ export default function TimeReports() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [hasUnsentReports, setHasUnsentReports] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -71,6 +87,7 @@ export default function TimeReports() {
         console.log("Projekt från databasen:", projectsMap);
 
         setReports(reportsData || []);
+        setHasUnsentReports(reportsData?.some(report => !report.sent) || false);
         setLoading(false);
       } catch (error) {
         console.error("Ett fel uppstod:", error);
@@ -169,6 +186,14 @@ export default function TimeReports() {
           Tillbaka till startsidan
         </button>
       </div>
+
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 } 

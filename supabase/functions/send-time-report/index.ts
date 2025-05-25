@@ -15,8 +15,10 @@ serve(async (req) => {
 
   try {
     const { email, content } = await req.json()
+    console.log('Mottagen data:', { email, content })
 
     // Anropa Railway e-posttjänst
+    console.log('Anropar Railway endpoint:', RAILWAY_ENDPOINT)
     const response = await fetch(RAILWAY_ENDPOINT, {
       method: 'POST',
       headers: {
@@ -30,8 +32,12 @@ serve(async (req) => {
       }),
     })
 
+    console.log('Railway response status:', response.status)
+    const responseText = await response.text()
+    console.log('Railway response:', responseText)
+
     if (!response.ok) {
-      throw new Error('Kunde inte skicka e-post via Railway')
+      throw new Error(`Railway API error: ${response.status} ${responseText}`)
     }
 
     return new Response(
@@ -44,7 +50,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error:', error.message)
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ 
+        success: false, 
+        error: error.message,
+        details: error.stack 
+      }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,

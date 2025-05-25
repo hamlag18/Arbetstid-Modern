@@ -1,11 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Cog6ToothIcon, ClipboardDocumentListIcon, PlusIcon, DocumentTextIcon, PaperAirplaneIcon, ArrowRightOnRectangleIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, ClipboardDocumentListIcon, PlusIcon, DocumentTextIcon, ArrowRightOnRectangleIcon, PaperAirplaneIcon } from '@heroicons/react/24/outline';
 import { supabase } from '../supabase';
+import { useAuth } from '../contexts/AuthContext';
+
+function Notification({ message, type, onClose }) {
+  return (
+    <div className={`fixed top-20 right-4 p-4 rounded-lg shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    } text-white`}>
+      <div className="flex items-center gap-2">
+        <span>{message}</span>
+        <button onClick={onClose} className="ml-2 hover:text-white/80">✕</button>
+      </div>
+    </div>
+  );
+}
 
 export default function Navbar() {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [notification, setNotification] = useState(null);
   const [hasUnsentReports, setHasUnsentReports] = useState(false);
 
   useEffect(() => {
@@ -33,167 +49,117 @@ export default function Navbar() {
       }
     };
 
-    // Kontrollera om det finns oskickade tidrapporter
-    const checkUnsentReports = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: reports } = await supabase
-          .from('time_reports')
-          .select('sent')
-          .eq('user_id', user.id)
-          .eq('sent', false);
-
-        setHasUnsentReports(reports && reports.length > 0);
-      }
-    };
-
     checkAdminStatus();
+  }, []);
+
+  React.useEffect(() => {
     checkUnsentReports();
   }, []);
 
-  const handleSendHours = async () => {
+  const checkUnsentReports = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      // Hämta alla oskickade tidrapporter med projektinformation
-      const { data: unsentReports, error: reportsError } = await supabase
+      const { data: reports } = await supabase
         .from('time_reports')
-        .select(`
-          id,
-          date,
-          hours,
-          materials,
-          projects (
-            name
-          )
-        `)
+        .select('sent')
         .eq('user_id', user.id)
         .eq('sent', false);
 
-      if (reportsError) throw reportsError;
-      if (!unsentReports || unsentReports.length === 0) return;
-
-      // Skapa e-postinnehåll
-      const emailContent = unsentReports.map(report => {
-        const date = new Date(report.date).toLocaleDateString('sv-SE');
-        return `
-          Datum: ${date}
-          Projekt: ${report.projects?.name || 'Okänt projekt'}
-          Timmar: ${report.hours}
-          Material: ${report.materials || 'Inget material angivet'}
-        `;
-      }).join('\n\n');
-
-      // Skicka e-post via Edge Function
-      const { error: emailError } = await supabase.functions.invoke('send-time-report', {
-        body: {
-          email: user.email,
-          content: emailContent
-        }
-      });
-
-      if (emailError) throw emailError;
-
-      // Markera tidrapporterna som skickade
-      for (const report of unsentReports) {
-        const { error } = await supabase
-          .from('time_reports')
-          .update({ sent: true })
-          .eq('id', report.id);
-
-        if (error) throw error;
-      }
-
-      setHasUnsentReports(false);
+      setHasUnsentReports(reports && reports.length > 0);
     } catch (error) {
-      console.error("Fel vid skickande av timmar:", error);
+      console.error('Error checking unsent reports:', error);
     }
   };
 
-  const handleLogout = async () => {
+  const handleSendHours = () => {
+    navigate('/send-hours');
+  };
+
+  const handleSignOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Fel vid utloggning:", error);
-        return;
-      }
-      navigate("/login");
+      await signOut();
+      navigate('/login');
     } catch (error) {
-      console.error("Ett fel uppstod vid utloggning:", error);
+      console.error('Error signing out:', error);
     }
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-zinc-800 border-b border-zinc-700 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <Link to="/" className="text-white font-bold text-xl">
-              Arbetstid
-            </Link>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <button
-              onClick={handleSendHours}
-              disabled={!hasUnsentReports}
-              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
-              title="Skicka timmar"
-            >
-              <PaperAirplaneIcon className="h-6 w-6" />
-              <span className="text-sm font-medium">Skicka timmar</span>
-            </button>
-
-            <Link
-              to="/nytt-projekt"
-              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
-              title="Nytt projekt"
-            >
-              <PlusIcon className="h-6 w-6" />
-              <span className="text-sm font-medium">Nytt projekt</span>
-            </Link>
-
-            <Link
-              to="/tidrapporter"
-              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
-              title="Visa tidrapporter"
-            >
-              <DocumentTextIcon className="h-6 w-6" />
-              <span className="text-sm font-medium">Tidrapporter</span>
-            </Link>
-
-            {isAdmin && (
-              <Link
-                to="/projects"
-                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
-                title="Hantera projekt"
-              >
-                <ClipboardDocumentListIcon className="h-6 w-6" />
-                <span className="text-sm font-medium">Projekt</span>
+    <>
+      <nav className="fixed top-0 left-0 right-0 bg-zinc-800 border-b border-zinc-700 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <Link to="/" className="text-white font-bold text-xl">
+                Arbetstid
               </Link>
-            )}
+            </div>
 
-            <Link
-              to="/settings"
-              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
-              title="Inställningar"
-            >
-              <Cog6ToothIcon className="h-6 w-6" />
-              <span className="text-sm font-medium">Inställningar</span>
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                to="/nytt-projekt"
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+                title="Nytt projekt"
+              >
+                <PlusIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Nytt projekt</span>
+              </Link>
 
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
-              title="Logga ut"
-            >
-              <ArrowRightOnRectangleIcon className="h-6 w-6" />
-              <span className="text-sm font-medium">Logga ut</span>
-            </button>
+              <Link
+                to="/tidrapporter"
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+                title="Visa tidrapporter"
+              >
+                <DocumentTextIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Tidrapporter</span>
+              </Link>
+
+              {isAdmin && (
+                <Link
+                  to="/projects"
+                  className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+                  title="Hantera projekt"
+                >
+                  <ClipboardDocumentListIcon className="h-6 w-6" />
+                  <span className="text-sm font-medium">Projekt</span>
+                </Link>
+              )}
+
+              <Link
+                to="/settings"
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg"
+                title="Inställningar"
+              >
+                <Cog6ToothIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Inställningar</span>
+              </Link>
+
+              <button
+                onClick={handleSendHours}
+                disabled={!hasUnsentReports}
+                className="flex items-center gap-2 p-2 text-zinc-400 hover:text-white transition-colors bg-zinc-700/50 hover:bg-zinc-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Skicka timmar"
+              >
+                <PaperAirplaneIcon className="h-6 w-6" />
+                <span className="text-sm font-medium">Skicka timmar</span>
+              </button>
+
+              <button
+                onClick={handleSignOut}
+                className="text-zinc-400 hover:text-white transition-colors"
+              >
+                Logga ut
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </nav>
+      </nav>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
+    </>
   );
 } 

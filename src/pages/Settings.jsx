@@ -1,145 +1,186 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import NotificationManager from '../components/NotificationManager';
+import { supabase } from '../supabase';
 
 export default function Settings() {
   const { currentUser } = useAuth();
-  const [dailyReminderTime, setDailyReminderTime] = useState('17:00');
-  const [weeklyReminderDay, setWeeklyReminderDay] = useState('friday');
-  const [weeklyReminderTime, setWeeklyReminderTime] = useState('16:00');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+  
+  // Användarinställningar
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
   useEffect(() => {
-    // Ladda sparade inställningar
-    const savedSettings = localStorage.getItem('reminderSettings');
-    if (savedSettings) {
-      const settings = JSON.parse(savedSettings);
-      setDailyReminderTime(settings.dailyReminderTime || '17:00');
-      setWeeklyReminderDay(settings.weeklyReminderDay || 'friday');
-      setWeeklyReminderTime(settings.weeklyReminderTime || '16:00');
-    }
+    const loadUserData = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          // Hämta användarprofil
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+
+          if (profileError) throw profileError;
+
+          setFullName(profile.full_name || '');
+          setEmail(user.email || '');
+        }
+      } catch (error) {
+        console.error('Fel vid laddning av användardata:', error);
+        setError('Kunde inte ladda användardata');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
   }, []);
 
-  const saveSettings = () => {
-    const settings = {
-      dailyReminderTime,
-      weeklyReminderDay,
-      weeklyReminderTime
-    };
-    localStorage.setItem('reminderSettings', JSON.stringify(settings));
+  const updateProfile = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
 
-    // Schemalägg påminnelser
-    scheduleReminders();
-  };
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('Ingen användare inloggad');
 
-  const scheduleReminders = () => {
-    // Schemalägg daglig påminnelse
-    const [hours, minutes] = dailyReminderTime.split(':');
-    const dailyTime = new Date();
-    dailyTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
-    
-    if (dailyTime < new Date()) {
-      dailyTime.setDate(dailyTime.getDate() + 1);
-    }
+      // Uppdatera profil
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName })
+        .eq('id', user.id);
 
-    // Schemalägg veckovis påminnelse
-    const [weeklyHours, weeklyMinutes] = weeklyReminderTime.split(':');
-    const weeklyTime = new Date();
-    weeklyTime.setHours(parseInt(weeklyHours), parseInt(weeklyMinutes), 0, 0);
-    
-    // Beräkna nästa förekommande av vald veckodag
-    const daysUntilNext = (getDayNumber(weeklyReminderDay) - weeklyTime.getDay() + 7) % 7;
-    weeklyTime.setDate(weeklyTime.getDate() + daysUntilNext);
+      if (profileError) throw profileError;
 
-    // Skicka till Service Worker
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-      navigator.serviceWorker.controller.postMessage({
-        type: 'SCHEDULE_REMINDER',
-        reminderType: 'daily',
-        time: dailyTime.toISOString(),
-        userId: currentUser?.uid
-      });
+      // Uppdatera e-post om den har ändrats
+      if (email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+          email: email
+        });
+        if (emailError) throw emailError;
+      }
 
-      navigator.serviceWorker.controller.postMessage({
-        type: 'SCHEDULE_REMINDER',
-        reminderType: 'weekly',
-        time: weeklyTime.toISOString(),
-        userId: currentUser?.uid
-      });
+      // Uppdatera lösenord om det har angetts
+      if (newPassword && newPassword === confirmPassword) {
+        const { error: passwordError } = await supabase.auth.updateUser({
+          password: newPassword
+        });
+        if (passwordError) throw passwordError;
+      }
+
+      setSuccess('Profilen har uppdaterats');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Fel vid uppdatering av profil:', error);
+      setError('Kunde inte uppdatera profilen');
     }
   };
 
-  const getDayNumber = (day) => {
-    const days = {
-      'monday': 1,
-      'tuesday': 2,
-      'wednesday': 3,
-      'thursday': 4,
-      'friday': 5,
-      'saturday': 6,
-      'sunday': 0
-    };
-    return days[day.toLowerCase()];
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-zinc-900 text-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500 mb-4"></div>
+          <p className="text-zinc-400">Laddar inställningar...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-white mb-6">Inställningar</h1>
       
+      {error && (
+        <div className="bg-red-500/10 border border-red-500 text-red-500 px-4 py-3 rounded-lg mb-6">
+          {error}
+        </div>
+      )}
+      
+      {success && (
+        <div className="bg-green-500/10 border border-green-500 text-green-500 px-4 py-3 rounded-lg mb-6">
+          {success}
+        </div>
+      )}
+
+      {/* Användarinställningar */}
       <div className="bg-zinc-800 rounded-lg p-6 mb-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Påminnelser</h2>
+        <h2 className="text-xl font-semibold text-white mb-4">Användarinställningar</h2>
         
-        <div className="space-y-6">
-          {/* Daglig påminnelse */}
+        <form onSubmit={updateProfile} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">
-              Daglig påminnelse för tidregistrering
+              Fullständigt namn
             </label>
             <input
-              type="time"
-              value={dailyReminderTime}
-              onChange={(e) => setDailyReminderTime(e.target.value)}
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="T.ex. Hampus Lagerström"
+            />
+            <p className="mt-1 text-sm text-zinc-400">
+              Ditt namn kommer att visas i tidrapporter och projekt
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              E-post
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Veckovis påminnelse */}
           <div>
             <label className="block text-sm font-medium text-zinc-300 mb-2">
-              Veckovis påminnelse för tidrapport
+              Nytt lösenord
             </label>
-            <div className="grid grid-cols-2 gap-4">
-              <select
-                value={weeklyReminderDay}
-                onChange={(e) => setWeeklyReminderDay(e.target.value)}
-                className="bg-zinc-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="monday">Måndag</option>
-                <option value="tuesday">Tisdag</option>
-                <option value="wednesday">Onsdag</option>
-                <option value="thursday">Torsdag</option>
-                <option value="friday">Fredag</option>
-                <option value="saturday">Lördag</option>
-                <option value="sunday">Söndag</option>
-              </select>
-              <input
-                type="time"
-                value={weeklyReminderTime}
-                onChange={(e) => setWeeklyReminderTime(e.target.value)}
-                className="bg-zinc-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Lämna tomt om du inte vill ändra"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-2">
+              Bekräfta nytt lösenord
+            </label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full bg-zinc-700 text-white rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Lämna tomt om du inte vill ändra"
+            />
           </div>
 
           <button
-            onClick={saveSettings}
+            type="submit"
             className="w-full bg-blue-500 hover:bg-blue-600 text-white py-2 rounded-lg transition-colors"
           >
-            Spara inställningar
+            Spara användarinställningar
           </button>
-        </div>
+        </form>
       </div>
-
-      <NotificationManager />
     </div>
   );
 } 

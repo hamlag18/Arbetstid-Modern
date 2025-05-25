@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isToday, startOfWeek, endOfWeek, addDays } from "date-fns";
 import { sv } from "date-fns/locale";
 import { supabase } from "../supabase";
-import { ChevronLeftIcon, ChevronRightIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, ChevronRightIcon, TrashIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { Card, CardContent } from "../components/ui/card";
 
 function Modal({ isOpen, onClose, children }) {
@@ -15,6 +15,19 @@ function Modal({ isOpen, onClose, children }) {
         <div className="p-4 sm:p-6">
           {children}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Notification({ message, type, onClose }) {
+  return (
+    <div className={`fixed top-20 right-4 p-4 rounded-lg shadow-lg z-50 ${
+      type === 'success' ? 'bg-green-600' : 'bg-red-600'
+    } text-white`}>
+      <div className="flex items-center gap-2">
+        <span>{message}</span>
+        <button onClick={onClose} className="ml-2 hover:text-white/80">✕</button>
       </div>
     </div>
   );
@@ -49,8 +62,8 @@ export default function HomePage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
-
-  const hasUnsentReports = reports.some(report => !report.sent);
+  const [hasUnsentReports, setHasUnsentReports] = useState(false);
+  const [notification, setNotification] = useState(null);
 
   const fetchReports = async () => {
     try {
@@ -123,6 +136,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchReports();
+    checkUnsentReports();
   }, []);
 
   const handleDateClick = async (date) => {
@@ -285,24 +299,20 @@ export default function HomePage() {
     }
   };
 
-  const handleSendHours = async () => {
+  const checkUnsentReports = async () => {
     try {
-      const unsentReports = reports.filter(report => !report.sent);
-      
-      for (const report of unsentReports) {
-        const { error } = await supabase
-          .from('time_reports')
-          .update({ sent: true })
-          .eq('id', report.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-        if (error) throw error;
-      }
+      const { data: reports } = await supabase
+        .from('time_reports')
+        .select('sent')
+        .eq('user_id', user.id)
+        .eq('sent', false);
 
-      // Uppdatera listan efter att timmarna har skickats
-      await fetchReports();
+      setHasUnsentReports(reports && reports.length > 0);
     } catch (error) {
-      console.error("Fel vid skickande av timmar:", error);
-      setError("Kunde inte skicka timmar");
+      console.error('Error checking unsent reports:', error);
     }
   };
 
@@ -336,6 +346,16 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-zinc-900 text-white">
       <div className="max-w-screen-sm mx-auto px-4 py-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-0">Välkommen</h1>
+          <button
+            onClick={() => navigate("/tidrapport")}
+            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg transition-colors text-base sm:text-lg"
+          >
+            Ny tidrapport
+          </button>
+        </div>
+
         <div className="bg-zinc-800 rounded-lg p-4 sm:p-6 mb-6">
           <div className="calendar-container">
             <div className="flex justify-between items-center mb-4">
@@ -547,6 +567,14 @@ export default function HomePage() {
           )}
         </Modal>
       </div>
+
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification(null)}
+        />
+      )}
     </div>
   );
 }
